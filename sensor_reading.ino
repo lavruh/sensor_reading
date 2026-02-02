@@ -1,5 +1,6 @@
 #include <M5Unified.h>
 #include <M5GFX.h>
+#include "field.h"
 
 #define US_KEYBOARD 1
 #include <Arduino.h>
@@ -19,6 +20,9 @@ M5GFX display;
 uint16_t lineH = 25;
 
 uint16_t menuIndex = 0;
+
+Field dateField = Field(M5.Display.width() / 2, 5);
+Field timeField = Field(M5.Display.width() / 2, lineH);
 
 // Forward declarations
 void typeText(const char* text);
@@ -68,6 +72,10 @@ void setup()
     M5.begin(cfg);  
     M5.Display.setTextSize(2);
     lineH = M5.Display.fontHeight();
+
+    dateField = Field(M5.Display.width() / 2, 5);
+    timeField = Field(M5.Display.width() / 2, lineH);
+
     M5.Imu.begin();
     xTaskCreate(bluetoothTask, "bluetooth", 20000, NULL, 5, NULL);
 }
