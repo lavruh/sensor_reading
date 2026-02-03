@@ -16,13 +16,18 @@ String dataToSend = "";
 
 M5GFX display;
 
-
-uint16_t lineH = 25;
+uint16_t lineH = 30;
 
 uint16_t menuIndex = 0;
 
-Field dateField = Field(M5.Display.width() / 2, 5);
-Field timeField = Field(M5.Display.width() / 2, lineH);
+Field dateField = Field();
+Field timeField = Field();
+Field batField = Field();
+Field bleField = Field();
+TitleField titleField = TitleField();
+TitleField body1 = TitleField();
+TitleField body2 = TitleField();
+
 
 // Forward declarations
 void typeText(const char* text);
@@ -70,11 +75,18 @@ void setup()
 {
     auto cfg = M5.config();  
     M5.begin(cfg);  
-    M5.Display.setTextSize(2);
+    M5.Display.setTextSize(1);
     lineH = M5.Display.fontHeight();
+    int h = lineH;
+    int w = M5.Display.width()/2;
 
-    dateField = Field(M5.Display.width() / 2, 5);
-    timeField = Field(M5.Display.width() / 2, lineH);
+    dateField = Field(M5.Display.width() / 2, 5, h, w);
+    timeField = Field(M5.Display.width() / 2, lineH*2, h, w);
+    batField = Field(5, 5, h, w);
+    bleField = Field(5, lineH*2, h, w);
+    titleField = TitleField(0, lineH * 5, lineH, M5.Display.width(), &fonts::Font4);
+    body1 = TitleField(0, lineH * 9, lineH, M5.Display.width(), &fonts::Font2);
+    body2 = TitleField(0, lineH * 12, lineH, M5.Display.width(), &fonts::Font2);
 
     M5.Imu.begin();
     xTaskCreate(bluetoothTask, "bluetooth", 20000, NULL, 5, NULL);
@@ -85,7 +97,7 @@ void setup()
 void loop()
 {
   M5.update();
-  checkBat();
+  // checkBat();
   updateClocks();
   checkBLE();
   buttons();   
@@ -93,34 +105,6 @@ void loop()
   if(menuIndex == 0) showIMU();  
   if(menuIndex == 1) setTimeMenu();             
 }
-
-
-// `updateClocks()` moved to clocks.cpp
-
-void checkBat()
-{
-      static int prev_battery = INT_MAX;
-      batteryLevel = M5.Power.getBatteryLevel();
-      if (prev_battery != batteryLevel)
-      {
-        prev_battery = batteryLevel;
-        M5.Display.setTextSize(1);
-        M5.Display.startWrite();
-        M5.Display.setCursor(5, 5);
-        M5.Display.print("Bat:");
-        if (batteryLevel >= 0)
-        {
-          M5.Display.printf("%03d", batteryLevel);
-        }
-        else
-        {
-          M5.Display.print("EMPTY");
-        }
-        M5.Display.endWrite();
-      }  
-}
-
-
 
 // Message (report) sent when a key is pressed or released
 struct InputReport {
@@ -262,10 +246,11 @@ void bluetoothTask(void*) {
     advertising->addServiceUUID(hid->batteryService()->getUUID());
     advertising->start();
 
-    M5.Display.startWrite();
-    M5.Display.setCursor(5, lineH*3);
-    M5.Display.print("BLE ready");
-    M5.Display.endWrite();
+    // M5.Display.startWrite();
+    // M5.Display.setCursor(5, lineH*3);
+    // M5.Display.print("BLE ready");
+    // M5.Display.endWrite();
+    bleField.show("BLE ready");
     delay(portMAX_DELAY);
 };
 
@@ -307,17 +292,11 @@ void typeText(String text) {
     }
 }
 
-
-void diplayBleStatus(String msg){
-        M5.Display.fillRect(5 , lineH * 2, M5.Display.width() / 2,lineH);
-        M5.Display.drawString(msg,5, lineH * 2);
-}
-
 void checkBLE(){
   if(isBleConnected){
-    diplayBleStatus("Conn");
+    bleField.show("Conn");
   }else{
-    diplayBleStatus("Disc");
+    bleField.show("Disc");
   }
 }
 
@@ -352,10 +331,11 @@ void diplayWifiStatus(String msg, uint8_t offset=0){
 #endif
 
 void setTimeMenu(){
-  M5.Display.setTextSize(2);
-  M5.Display.drawString("Get NTP", 15, lineH * 6);
-  M5.Display.drawString("time", 15, lineH * 7);
-  M5.Display.setTextSize(1);
+  // M5.Display.setTextSize(2);
+  titleField.show("Set Time");
+  // M5.Display.drawString("Get NTP", 15, lineH * 6);
+  // M5.Display.drawString("time", 15, lineH * 7);
+  // M5.Display.setTextSize(1);
 }
 
 void setTime(){
@@ -475,7 +455,7 @@ void drawGraph(const rect_t& r, const m5::imu_data_t& data)
 void showIMU(){
   auto imu_update = M5.Imu.update();
   int dataOffset = M5.Display.width()/2;
-  static rect_t rect_graph_area = {M5.Display.width()/2, lineH*9, M5.Display.width()/2, 200 };
+  static rect_t rect_graph_area = {M5.Display.width()/2, lineH*20, M5.Display.width()/2, 200 };
   auto data = M5.Imu.getImuData();
   drawGraph(rect_graph_area, data);
 
@@ -484,11 +464,14 @@ void showIMU(){
   float list = atan2(-data.accel.x, sqrt(data.accel.y * data.accel.y + data.accel.z * data.accel.z)) * 180.0 / PI;
   float trim = atan2(data.accel.y, data.accel.z) * 180.0 / PI;
 
-  snprintf(buffer, sizeof(buffer), "List :    %.1f", list);
-  M5.Display.drawString(buffer, 5, lineH * 6);
-  snprintf(buffer, sizeof(buffer), "Trim :    %.1f", trim);
-  M5.Display.drawString(buffer, 5, lineH * 7);
+  titleField.show("Gyro");
+
+  snprintf(buffer, sizeof(buffer), "  List : %.1f  ", list);
+  body1.show(buffer);
+  snprintf(buffer, sizeof(buffer), "  Trim : %.1f  ", trim);
+  body2.show(buffer);
 
   snprintf(buffer, sizeof(buffer), "L:%.1f T:%.1f", list, trim);
   dataToSend = buffer;
+  M5.delay(100);
 }
