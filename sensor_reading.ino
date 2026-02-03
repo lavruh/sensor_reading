@@ -302,10 +302,6 @@ void checkBLE(){
 
 
 
-void diplayWifiStatus(String msg, uint8_t offset=0){
-        M5.Display.drawString(msg,M5.Display.width()/4, lineH * (4+offset));
-}
-
  #define WIFI_SSID     "Ap9"
  #define WIFI_PASSWORD "mimicipi1"
  #define NTP_TIMEZONE  "EET-2"
@@ -341,22 +337,22 @@ void setTimeMenu(){
 void setTime(){
 /// setup RTC ( NTP auto setting )
   configTzTime(NTP_TIMEZONE, NTP_SERVER1, NTP_SERVER2, NTP_SERVER3);
-  diplayWifiStatus("WiFi:");
+  body1.show("WiFi:");
 
   WiFi.begin( WIFI_SSID, WIFI_PASSWORD );
 
   for (int i = 20; i && WiFi.status() != WL_CONNECTED; --i)
   {
-    diplayWifiStatus(".", 1);
+    body2.show(".");
     M5.delay(500);
   }
   if (WiFi.status() == WL_CONNECTED) {
-    diplayWifiStatus("\r\nWiFi Connected.");
-    diplayWifiStatus("NTP:", 1);
+    body1.show("WiFi Connected.");
+    body2.show("NTP:");
 #if SNTP_ENABLED
     while (sntp_get_sync_status() != SNTP_SYNC_STATUS_COMPLETED)
     {
-      diplayWifiStatus(".", 2);
+      body2.show(".");
       M5.delay(1000);
     }
 #else
@@ -364,10 +360,10 @@ void setTime(){
     struct tm timeInfo;
     while (!getLocalTime(&timeInfo, 1000))
     {
-      diplayWifiStatus('.', 2);
+      body2.show('.', 2);
     };
 #endif
-    diplayWifiStatus("\r\nNTP Connected.", 1);
+    body2.show("\r\nNTP Connected.");
 
     time_t t = time(nullptr)+1; // Advance one second.
     while (t > time(nullptr));  /// Synchronization in seconds
@@ -375,10 +371,8 @@ void setTime(){
   }
   else
   {
-    diplayWifiStatus("\r\nWiFi none...");
+    body1.show("\r\nWiFi none...");
   }
-
-  M5.Display.clear();
 }
 
 static constexpr const uint32_t color_tbl[18] = 
