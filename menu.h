@@ -2,6 +2,7 @@
 #define MENU_H
 
 #include <Arduino.h>
+#include <functional>
 
 // Strategy interface for menu screens
 class MenuStrategy {
@@ -40,6 +41,10 @@ private:
   MenuStrategy* currentStrategy;
   int currentIndex;
   MenuStrategy* strategies[2];  // Array of available strategies
+  static const int MAX_SUBSCRIBERS = 8;
+  // subscriber callbacks
+  std::function<void()> _subscribers[MAX_SUBSCRIBERS];
+  int _subscriberCount = 0;
 
 public:
   Menu();
@@ -56,6 +61,12 @@ public:
   
   // Handle button A press
   void handleButtonA() { if (currentStrategy) currentStrategy->onButtonA(); }
+
+  // Subscribe a callback; callbacks have signature void()
+  bool subscribe(const std::function<void()>& callback);
+
+  // Notify all subscribers
+  void notifyListeners();
   
   // Get current strategy name
   const char* getCurrentName() const { 

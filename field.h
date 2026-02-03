@@ -16,6 +16,7 @@ public:
 
   void show(String str);
   void update(String str);
+  void redraw();
 };
 
 class TitleField : public Field {

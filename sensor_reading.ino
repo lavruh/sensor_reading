@@ -67,9 +67,12 @@ void setup()
     int w = M5.Display.width()/2;
 
     dateField = Field(M5.Display.width() / 2, 5, h, w);
+    menu.subscribe(std::bind(&Field::redraw, &dateField));
     timeField = Field(M5.Display.width() / 2, lineH*2, h, w);
     batField = Field(5, 5, h, w);
+    menu.subscribe(std::bind(&Field::redraw, &batField));
     bleField = Field(5, lineH*2, h, w);
+    menu.subscribe(std::bind(&Field::redraw, &bleField));
     titleField = TitleField(0, lineH * 5, lineH, M5.Display.width(), &fonts::Font4);
     body1 = TitleField(0, lineH * 9, lineH, M5.Display.width(), &fonts::Font2);
     body2 = TitleField(0, lineH * 12, lineH, M5.Display.width(), &fonts::Font2);

@@ -16,6 +16,11 @@ void Field::show(String str)
   }
 }
 
+void Field::redraw()
+{
+  update(prevValue);
+}
+
 void TitleField::update(String str)
 {
   // M5.Display.fillRect(x, y, w, h, 0x0000);

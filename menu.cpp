@@ -35,6 +35,25 @@ void Menu::nextMenu() {
   
   // Clear display when switching menus
   M5.Display.clear();
+
+  // Notify listeners about menu change
+  notifyListeners();
 }
 
 // Note: Menu::loopTask() wrapper is declared in header and calls current strategy's loopTask().
+
+bool Menu::subscribe(const std::function<void()>& callback) {
+  if (_subscriberCount < MAX_SUBSCRIBERS && callback) {
+    _subscribers[_subscriberCount++] = callback;
+    return true;
+  }
+  return false;
+}
+
+void Menu::notifyListeners() {
+  for (int i = 0; i < _subscriberCount; ++i) {
+    if (_subscribers[i]) {
+      _subscribers[i]();
+    }
+  }
+}
