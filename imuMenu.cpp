@@ -13,8 +13,8 @@ struct rect_t
 
 extern uint16_t lineH;
 extern TitleField titleField;
-extern Field body1;
-extern Field body2;
+extern TitleField body1;
+extern TitleField body2;
 extern String dataToSend;
 extern void typeText(String);
 void drawGraph(const rect_t& r, const m5::imu_data_t& data);

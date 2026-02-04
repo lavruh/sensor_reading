@@ -74,8 +74,8 @@ void setup()
     bleField = Field(5, lineH*2, h, w);
     menu.subscribe(std::bind(&Field::redraw, &bleField));
     titleField = TitleField(0, lineH * 5, lineH, M5.Display.width(), &fonts::Font4);
-    body1 = TitleField(0, lineH * 9, lineH, M5.Display.width(), &fonts::Font2);
-    body2 = TitleField(0, lineH * 12, lineH, M5.Display.width(), &fonts::Font2);
+    body1 = TitleField(0, lineH * 9, lineH, M5.Display.width(), &fonts::Font4);
+    body2 = TitleField(0, lineH * 13, lineH, M5.Display.width(), &fonts::Font4);
 
     M5.Imu.begin();
     xTaskCreate(bluetoothTask, "bluetooth", 20000, NULL, 5, NULL);

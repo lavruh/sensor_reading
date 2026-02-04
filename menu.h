@@ -35,12 +35,21 @@ public:
   const char* getName() const override { return "SetTime"; }
 };
 
+// Concrete strategy: Internal Temperature screen
+class IntTempMenuStrategy : public MenuStrategy {
+public:
+  bool isInit = false;
+  void loopTask() override;
+  void onButtonA() override;
+  const char* getName() const override { return "IntTemp"; }
+};
+
 // Menu manager using Strategy pattern
 class Menu {
 private:
   MenuStrategy* currentStrategy;
   int currentIndex;
-  MenuStrategy* strategies[2];  // Array of available strategies
+  MenuStrategy* strategies[3];  // Array of available strategies
   static const int MAX_SUBSCRIBERS = 8;
   // subscriber callbacks
   std::function<void()> _subscribers[MAX_SUBSCRIBERS];
