@@ -9,6 +9,6 @@ void checkBat()
   batteryLevel = M5.Power.getBatteryLevel();
 
   char buf[16];
-  snprintf( buf, 16, "Bat: %03d", batteryLevel);
+  snprintf( buf, 16, "B: %03d", batteryLevel);
   batField.show( String(buf) );
 }

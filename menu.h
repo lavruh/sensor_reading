@@ -44,12 +44,23 @@ public:
   const char* getName() const override { return "IntTemp"; }
 };
 
+// Concrete strategy: Distance Sensor screen
+class DistanceSensorMenuStrategy : public MenuStrategy {
+public:
+  String status = "";
+  bool isInit = false;
+  void loopTask() override;
+  void onButtonA() override;
+  void initSensor();
+  const char* getName() const override { return "Distance"; }
+};
+
 // Menu manager using Strategy pattern
 class Menu {
 private:
   MenuStrategy* currentStrategy;
   int currentIndex;
-  MenuStrategy* strategies[3];  // Array of available strategies
+  MenuStrategy* strategies[4];  // Array of available strategies
   static const int MAX_SUBSCRIBERS = 8;
   // subscriber callbacks
   std::function<void()> _subscribers[MAX_SUBSCRIBERS];

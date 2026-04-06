@@ -11,7 +11,7 @@ extern String dataToSend;
 extern void typeText(String text);
 
 // DS18B20 sensor on pin G26
-#define DS18B20_PIN 26
+#define DS18B20_PIN 25
 OneWire oneWire(DS18B20_PIN);
 DallasTemperature sensors(&oneWire);
 

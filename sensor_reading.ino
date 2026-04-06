@@ -10,6 +10,7 @@ String dataToSend = "";
 M5GFX display;
 
 uint16_t lineH = 30;
+uint8_t powerCount = 3;
 
 
 Field dateField = Field();
@@ -38,12 +39,23 @@ void buttons()
     menu.nextMenu();
   }
 
-  if(M5.BtnPWR.wasClicked()){
+  if(M5.BtnPWR.isHolding()){
+    char buf[32];
+    snprintf(buf, sizeof(buf), "    %i    ", powerCount);
+    titleField.show(buf);
+    powerCount= powerCount-1;
+    M5.delay(1000);
   }
+  if(M5.BtnPWR.isReleased()){
+    powerCount = 3;
+    titleField.show("");
+  }
+
 }
 
 void setup()
 {
+  Serial.begin(115200);
     auto cfg = M5.config();  
     M5.begin(cfg);  
     M5.Display.setTextSize(1);
@@ -64,6 +76,7 @@ void setup()
 
     M5.Imu.begin();
     xTaskCreate(bluetoothTask, "bluetooth", 20000, NULL, 5, NULL);
+    
 }
 
 void loop()
