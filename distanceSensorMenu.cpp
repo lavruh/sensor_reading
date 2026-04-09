@@ -15,8 +15,6 @@ extern String dataToSend;
 extern void typeText(String text);
 
 void DistanceSensorMenuStrategy::initSensor() {
-  Wire.begin(0, 26);
-
   if (distanceSensor.begin() != true){
     status = "Init Failed";
     body1.show(status);

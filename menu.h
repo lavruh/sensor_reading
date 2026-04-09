@@ -55,12 +55,22 @@ public:
   const char* getName() const override { return "Distance"; }
 };
 
+// Concrete strategy: IR Temperature screen
+class IrTemperatureMenu : public MenuStrategy {
+public:
+  bool isInit = false;
+  void loopTask() override;
+  void onButtonA() override;
+  void initSensor();
+  const char* getName() const override { return "IRTemperature"; }
+};
+
 // Menu manager using Strategy pattern
 class Menu {
 private:
   MenuStrategy* currentStrategy;
   int currentIndex;
-  MenuStrategy* strategies[4];  // Array of available strategies
+  MenuStrategy* strategies[5];  // Array of available strategies
   static const int MAX_SUBSCRIBERS = 8;
   // subscriber callbacks
   std::function<void()> _subscribers[MAX_SUBSCRIBERS];

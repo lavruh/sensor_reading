@@ -15,9 +15,10 @@ extern void setTime();
 Menu::Menu() : currentIndex(0) {
   // Initialize strategies
   strategies[0] = new IMUMenuStrategy();
-  strategies[1] = new IntTempMenuStrategy();
-  strategies[2] = new DistanceSensorMenuStrategy();
-  strategies[3] = new SetTimeMenuStrategy();
+  strategies[1] = new IrTemperatureMenu();
+  strategies[2] = new IntTempMenuStrategy();
+  strategies[3] = new DistanceSensorMenuStrategy();
+  strategies[4] = new SetTimeMenuStrategy();
   
   // Set the current strategy to the first one
   currentStrategy = strategies[0];
@@ -25,14 +26,14 @@ Menu::Menu() : currentIndex(0) {
 
 Menu::~Menu() {
   // Clean up dynamically allocated strategies
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 5; ++i) {
     delete strategies[i];
   }
 }
 
 void Menu::nextMenu() {
   // Move to next menu (wraps around)
-  currentIndex = (currentIndex + 1) % 4;
+  currentIndex = (currentIndex + 1) % 5;
   currentStrategy = strategies[currentIndex];
   
   // Clear display when switching menus

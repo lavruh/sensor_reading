@@ -3,6 +3,7 @@
 #include "field.h"
 #include "ble.h"
 
+#include <Wire.h>
 #include "menu.h"
 
 String dataToSend = "";
@@ -62,6 +63,8 @@ void setup()
     lineH = M5.Display.fontHeight();
     int h = lineH;
     int w = M5.Display.width()/2;
+
+    Wire.begin(0, 26);
 
     dateField = Field(M5.Display.width() / 2, 5, h, w);
     menu.subscribe(std::bind(&Field::redraw, &dateField));
