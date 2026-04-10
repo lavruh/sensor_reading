@@ -27,6 +27,10 @@ public:
       : Field(x, y, h, w), font(font) {}
 
   void show(String str);
+  void showValue(float num, String prefix, String suffix);
+  void showValue(float num, String prefix);
+  void showValue(float num);
+  void showValue(int num);
   void update(String str);
 };
 #endif // FIELD_H

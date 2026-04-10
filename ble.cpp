@@ -154,7 +154,7 @@ void bluetoothTask(void*) {
     advertising->addServiceUUID(hid->batteryService()->getUUID());
     advertising->start();
 
-    bleField.show("BLE ready");
+    bleField.show("  R");
     delay(portMAX_DELAY);
 };
 
@@ -198,8 +198,8 @@ void typeText(String text) {
 
 void checkBLE(){
   if(isBleConnected){
-    bleField.show("Conn");
+    bleField.show("  C");
   }else{
-    bleField.show("Disc");
+    bleField.show("  D");
   }
 }

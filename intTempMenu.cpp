@@ -17,7 +17,7 @@ DallasTemperature sensors(&oneWire);
 
 
 void IntTempMenuStrategy::loopTask() {
-  titleField.show("Temper");
+  titleField.show("T *C");
 
   if(!isInit) {
     sensors.begin();
@@ -25,20 +25,16 @@ void IntTempMenuStrategy::loopTask() {
   }
 
   float temp = 0.0f;
-  
   sensors.requestTemperatures();
   temp = sensors.getTempCByIndex(0);
   
-  char buf[16];
   if (temp != DEVICE_DISCONNECTED_C) {
-    snprintf(buf, sizeof(buf), "   %.2f *C   ", temp);
+    body1.showValue(temp);
     dataToSend = String(temp, 2);
   } else {
-    snprintf(buf, sizeof(buf), "Sensor Error");
+    body1.show("Err");
     dataToSend = "No Sensor";
   }
-  
-  body1.show(buf);
 }
 
 void IntTempMenuStrategy::onButtonA() {

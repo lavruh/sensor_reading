@@ -7,6 +7,7 @@
 
 // Forward declarations from other files
 extern TitleField body1;
+extern TitleField body2;
 extern TitleField titleField;
 extern String dataToSend;
 extern void typeText(String text);
@@ -15,26 +16,23 @@ Adafruit_MLX90614 mlx = Adafruit_MLX90614();
 
 void IrTemperatureMenu::initSensor() {
   if (!mlx.begin(0x5A, &Wire)) {
-    body1.show("Err init");
+    body1.show("Err");
     return;
   };
     isInit = true;
 }
 
 void IrTemperatureMenu::loopTask() {
-  titleField.show("IR Temp");
-
+  titleField.show("IR_T *C");
   if(!isInit) {
     initSensor();
   }
-
-  
     float temp = mlx.readObjectTempC();
-    char buf[16];
-    snprintf(buf, sizeof(buf), "   %.2f *C   ", temp);
+    body1.showValue(temp);
+    // body2.show("*C");
 
     dataToSend = String(temp, 2);
-    body1.show(buf);
+
 
   
 }

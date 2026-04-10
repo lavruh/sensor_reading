@@ -15,30 +15,23 @@ extern String dataToSend;
 extern void typeText(String text);
 
 void DistanceSensorMenuStrategy::initSensor() {
-  if (distanceSensor.begin() != true){
-    status = "Init Failed";
-    body1.show(status);
+  if (!distanceSensor.begin()){
     return;
   }
 
   distanceSensor.setDistanceModeLong();
   distanceSensor.setTimingBudgetInMs(50);
   distanceSensor.setIntermeasurementPeriod(54);
-
   distanceSensor.startRanging();
-  
-  status = "Ready";
-  body1.show(status);
   isInit = true;
-  M5.delay(1000);
 }
 
 void DistanceSensorMenuStrategy::loopTask() {
-  titleField.show("Distance");
-
+  titleField.show("Dist mm");
   if(!isInit) {
     initSensor();
   }
+
   distanceSensor.startRanging();
   uint16_t distance = distanceSensor.getDistance();
   distanceSensor.clearInterrupt();
@@ -64,14 +57,15 @@ void DistanceSensorMenuStrategy::loopTask() {
     status = "target fail";
     break;
   default:
-    status = "unknown ERR";
+    status = "unk ERR";
     break;
   }
     
-    char buf[32];
-    snprintf(buf, sizeof(buf), "%i mm", distance);
-    body2.show(buf);
-    
+    // char buf[32];
+    // snprintf(buf, sizeof(buf), "%i mm", distance);
+    // body2.show(buf);
+    body1.showValue(distance);
+
     dataToSend = String(distance, 1);
       
   M5.delay(100);

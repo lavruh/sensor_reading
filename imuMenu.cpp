@@ -28,7 +28,7 @@ void IMUMenuStrategy::loopTask() {
  
   auto imu_update = M5.Imu.update();
   int dataOffset = M5.Display.width()/2;
-  static rect_t rect_graph_area = {M5.Display.width()/2, lineH*20, M5.Display.width()/2, 200 };
+  static rect_t rect_graph_area = {M5.Display.width()/2, M5.Display.height() /2 , M5.Display.width()/2, 200 };
   auto data = M5.Imu.getImuData();
   drawGraph(rect_graph_area, data);
 
@@ -38,10 +38,8 @@ void IMUMenuStrategy::loopTask() {
   float trim = atan2(data.accel.y, data.accel.z) * 180.0 / PI;
 
 
-  snprintf(buffer, sizeof(buffer), "  List : %.1f  ", list);
-  body1.show(buffer);
-  snprintf(buffer, sizeof(buffer), "  Trim : %.1f  ", trim);
-  body2.show(buffer);
+  body1.showValue(list, "L:");
+  body2.showValue(trim, "T:");
 
   snprintf(buffer, sizeof(buffer), "L:%.1f T:%.1f", list, trim);
   dataToSend = buffer;

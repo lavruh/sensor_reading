@@ -60,22 +60,27 @@ void setup()
     auto cfg = M5.config();  
     M5.begin(cfg);  
     M5.Display.setTextSize(1);
-    lineH = M5.Display.fontHeight();
-    int h = lineH;
+
     int w = M5.Display.width()/2;
 
     Wire.begin(0, 26);
 
-    dateField = Field(M5.Display.width() / 2, 5, h, w);
+    int displayWidth = M5.Display.width();
+    int lh = 1;
+
+    dateField = Field(displayWidth / 4 +5, 5, lh, w);
+    timeField = Field(displayWidth / 4 +5, 25, lh, w);
+    batField = Field(5, 5, lh, w);
+    bleField = Field(5, 25, lh, w);
+    
+    titleField = TitleField(0, 50, lh, displayWidth, &fonts::FreeMono12pt7b);
+    body1 = TitleField(0, 80, lh, displayWidth, &fonts::FreeSerif18pt7b);
+    body2 = TitleField(0, 110, lh, displayWidth, &fonts::FreeSerif18pt7b);
+
+
     menu.subscribe(std::bind(&Field::redraw, &dateField));
-    timeField = Field(M5.Display.width() / 2, lineH*2, h, w);
-    batField = Field(5, 5, h, w);
     menu.subscribe(std::bind(&Field::redraw, &batField));
-    bleField = Field(5, lineH*2, h, w);
     menu.subscribe(std::bind(&Field::redraw, &bleField));
-    titleField = TitleField(0, lineH * 5, lineH, M5.Display.width(), &fonts::Font4);
-    body1 = TitleField(0, lineH * 9, lineH, M5.Display.width(), &fonts::Font4);
-    body2 = TitleField(0, lineH * 13, lineH, M5.Display.width(), &fonts::Font4);
 
     M5.Imu.begin();
     xTaskCreate(bluetoothTask, "bluetooth", 20000, NULL, 5, NULL);
