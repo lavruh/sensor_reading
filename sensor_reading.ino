@@ -40,16 +40,22 @@ void buttons()
     menu.nextMenu();
   }
 
+  if(M5.BtnPWR.wasClicked()){
+    menu.prevMenu();
+  }
+
   if(M5.BtnPWR.isHolding()){
-    char buf[32];
-    snprintf(buf, sizeof(buf), "    %i    ", powerCount);
-    titleField.show(buf);
+    M5.Display.clearDisplay(TFT_YELLOW);
+    // titleField.show(buf);
+    titleField.show("Pwr off:");
+    body1.show(String(powerCount));
     powerCount= powerCount-1;
     M5.delay(1000);
   }
-  if(M5.BtnPWR.isReleased()){
+  if(M5.BtnPWR.wasReleased()){
     powerCount = 3;
-    titleField.show("");
+    M5.Display.clearDisplay(TFT_BLACK);
+    menu.notifyListeners();
   }
 
 }
@@ -81,6 +87,8 @@ void setup()
     menu.subscribe(std::bind(&Field::redraw, &dateField));
     menu.subscribe(std::bind(&Field::redraw, &batField));
     menu.subscribe(std::bind(&Field::redraw, &bleField));
+    menu.subscribe(std::bind(&Field::redraw, &timeField));
+    menu.subscribe(std::bind(&TitleField::redraw, &titleField));
 
     M5.Imu.begin();
     xTaskCreate(bluetoothTask, "bluetooth", 20000, NULL, 5, NULL);

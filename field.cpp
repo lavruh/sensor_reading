@@ -38,6 +38,11 @@ void TitleField::show(String str)
   }
 }
 
+void TitleField::redraw()
+{
+  update(prevValue);
+}
+
 
   void TitleField::showValue(float num, String prefix = "", String suffix = "")
   {

@@ -26,6 +26,7 @@ public:
   TitleField(int x = 0, int y = 0, int h = 0, int w = 0, const lgfx::IFont* font = &fonts::Font2)
       : Field(x, y, h, w), font(font) {}
 
+  void redraw();
   void show(String str);
   void showValue(float num, String prefix, String suffix);
   void showValue(float num, String prefix);

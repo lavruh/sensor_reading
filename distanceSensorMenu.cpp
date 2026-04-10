@@ -15,10 +15,7 @@ extern String dataToSend;
 extern void typeText(String text);
 
 void DistanceSensorMenuStrategy::initSensor() {
-  if (!distanceSensor.begin()){
-    return;
-  }
-
+  distanceSensor.begin();
   distanceSensor.setDistanceModeLong();
   distanceSensor.setTimingBudgetInMs(50);
   distanceSensor.setIntermeasurementPeriod(54);

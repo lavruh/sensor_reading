@@ -43,6 +43,18 @@ void Menu::nextMenu() {
   notifyListeners();
 }
 
+void Menu::prevMenu() {
+  // Move to previous menu (wraps around)
+  currentIndex = (currentIndex - 1 + 5) % 5;
+  currentStrategy = strategies[currentIndex];
+  
+  // Clear display when switching menus
+  M5.Display.clear();
+
+  // Notify listeners about menu change
+  notifyListeners();
+}
+
 // Note: Menu::loopTask() wrapper is declared in header and calls current strategy's loopTask().
 
 bool Menu::subscribe(const std::function<void()>& callback) {

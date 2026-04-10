@@ -83,6 +83,9 @@ public:
   // Switch to next menu (wraps around)
   void nextMenu();
   
+  // Switch to previous menu (wraps around)
+  void prevMenu();
+  
   // Get current strategy index
   int getCurrentIndex() const { return currentIndex; }
   
