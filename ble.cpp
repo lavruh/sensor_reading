@@ -159,9 +159,10 @@ void bluetoothTask(void*) {
 };
 
 
-void typeText(String text) {
+void typeText(String t) {
     if(!isBleConnected) return;
     // int len = strlen(text);
+    String text = t+"\n";
     int len = text.length();
     for (int i = 0; i < len; i++) {
 

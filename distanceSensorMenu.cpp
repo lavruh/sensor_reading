@@ -39,37 +39,29 @@ void DistanceSensorMenuStrategy::loopTask() {
   {
   case 0:
     // Serial.print("Good");
-    status = "";
+    status = "                ";
     break;
   case 1:
-    // Serial.print("Sigma fail");
     status = "Sigma fail";
     break;
   case 2:
-    // Serial.print("Signal fail");
-    status = "Signal fail";
+    status = "Sign fail";
     break;
   case 7:
-    // Serial.print("Wrapped target fail");
-    status = "target fail";
+    status = "trg fail";
     break;
   default:
     status = "unk ERR";
     break;
   }
-    
-    // char buf[32];
-    // snprintf(buf, sizeof(buf), "%i mm", distance);
-    // body2.show(buf);
-    body1.showValue(distance);
-
-    dataToSend = String(distance, 1);
-      
-  M5.delay(100);
+  
+  body1.showValue(distance);
+  dataToSend = String(distance);
+  body2.show(status); 
+  M5.delay(500);
 }
 
 void DistanceSensorMenuStrategy::onButtonA() {
-  // Send the latest distance reading via BLE/keyboard
   typeText(dataToSend);
 }
 
