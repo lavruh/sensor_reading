@@ -1,7 +1,7 @@
 #include <M5Unified.h>
 #include "menu.h"
 #include "field.h"
-
+#include "Graph.h"
 
 #include <Wire.h>
 #include <SparkFun_VL53L1X.h>
@@ -13,6 +13,9 @@ extern TitleField body1;
 extern TitleField body2;
 extern String dataToSend;
 extern void typeText(String text);
+extern int displayWidth;
+
+Graph distanceGraph(2, 150, displayWidth-4, 0, 4000);
 
 void DistanceSensorMenuStrategy::initSensor() {
   distanceSensor.begin();
@@ -58,7 +61,8 @@ void DistanceSensorMenuStrategy::loopTask() {
   body1.showValue(distance);
   dataToSend = String(distance);
   body2.show(status); 
-  M5.delay(500);
+  distanceGraph.showHistValue(distance);
+  M5.delay(400);
 }
 
 void DistanceSensorMenuStrategy::onButtonA() {

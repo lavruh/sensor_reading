@@ -10,6 +10,8 @@ String dataToSend = "";
 
 M5GFX display;
 
+
+int displayWidth = 130;
 uint16_t lineH = 30;
 uint8_t powerCount = 3;
 
@@ -71,7 +73,6 @@ void setup()
 
     Wire.begin(0, 26);
 
-    int displayWidth = M5.Display.width();
     int lh = 1;
 
     dateField = Field(displayWidth / 4 +5, 5, lh, w);
