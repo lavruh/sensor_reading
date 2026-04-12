@@ -8,14 +8,8 @@
 class MenuStrategy {
 public:
   virtual ~MenuStrategy() = default;
-  
-  // Display the menu screen
   virtual void loopTask() = 0;
-  
-  // Handle button A pressed (confirm/select action)
   virtual void onButtonA() = 0;
-  
-  // Get a name for this menu screen
   virtual const char* getName() const = 0;
 };
 
@@ -28,12 +22,12 @@ public:
 };
 
 // Concrete strategy: Set Time menu screen
-class SetTimeMenuStrategy : public MenuStrategy {
-public:
-  void loopTask() override;
-  void onButtonA() override;
-  const char* getName() const override { return "SetTime"; }
-};
+// class SetTimeMenuStrategy : public MenuStrategy {
+// public:
+//   void loopTask() override;
+//   void onButtonA() override;
+//   const char* getName() const override { return "SetTime"; }
+// };
 
 // Concrete strategy: Internal Temperature screen
 class IntTempMenuStrategy : public MenuStrategy {
@@ -65,11 +59,22 @@ public:
   const char* getName() const override { return "IRTemperature"; }
 };
 
+class MqttMenuStrategy : public MenuStrategy {
+public:
+  bool isInit = false;
+
+  void loopTask() override;
+  void onButtonA() override;
+  const char* getName() const override { return "MQTT"; }
+  void init();
+};
+
 // Menu manager using Strategy pattern
 class Menu {
 private:
   MenuStrategy* currentStrategy;
   int currentIndex;
+  // int strategyCount = 6;
   MenuStrategy* strategies[5];  // Array of available strategies
   static const int MAX_SUBSCRIBERS = 8;
   // subscriber callbacks
@@ -88,6 +93,9 @@ public:
   
   // Get current strategy index
   int getCurrentIndex() const { return currentIndex; }
+  
+  // Get the number of available strategies
+  int strategiesLength() const { return sizeof(strategies) / sizeof(strategies[0]); }
   
   // Run current menu's loop task
   void loopTask() { if (currentStrategy) currentStrategy->loopTask(); }

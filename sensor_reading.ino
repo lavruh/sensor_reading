@@ -5,9 +5,11 @@
 
 #include <Wire.h>
 #include "menu.h"
+#include "MqttClient.h"
 
 String dataToSend = "";
 
+MqttClient& mqtt = MqttClient::getInstance();
 M5GFX display;
 
 
@@ -104,5 +106,7 @@ void loop()
   checkBLE();
   buttons();   
   
-  menu.loopTask();        
+  menu.loopTask();   
+  // mqtt.loop();     
+  mqtt.send(dataToSend.c_str());
 }

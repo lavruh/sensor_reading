@@ -8,17 +8,15 @@ extern TitleField body1;
 extern TitleField body2;
 extern String dataToSend;
 extern void showIMU();
-extern void setTimeMenu();
-extern void setTime();
 
-// Menu implementation
 Menu::Menu() : currentIndex(0) {
   // Initialize strategies
   strategies[0] = new IMUMenuStrategy();
   strategies[1] = new IrTemperatureMenu();
   strategies[2] = new IntTempMenuStrategy();
   strategies[3] = new DistanceSensorMenuStrategy();
-  strategies[4] = new SetTimeMenuStrategy();
+  // strategies[4] = new SetTimeMenuStrategy();
+  strategies[4] = new MqttMenuStrategy();
   
   // Set the current strategy to the first one
   currentStrategy = strategies[0];
@@ -26,14 +24,14 @@ Menu::Menu() : currentIndex(0) {
 
 Menu::~Menu() {
   // Clean up dynamically allocated strategies
-  for (int i = 0; i < 5; ++i) {
+  for (int i = 0; i < strategiesLength(); ++i) {
     delete strategies[i];
   }
 }
 
 void Menu::nextMenu() {
   // Move to next menu (wraps around)
-  currentIndex = (currentIndex + 1) % 5;
+  currentIndex = (currentIndex + 1) % strategiesLength();
   currentStrategy = strategies[currentIndex];
   
   // Clear display when switching menus
@@ -45,7 +43,7 @@ void Menu::nextMenu() {
 
 void Menu::prevMenu() {
   // Move to previous menu (wraps around)
-  currentIndex = (currentIndex - 1 + 5) % 5;
+  currentIndex = (currentIndex - 1 + strategiesLength()) % strategiesLength();
   currentStrategy = strategies[currentIndex];
   
   // Clear display when switching menus
