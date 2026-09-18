@@ -4,10 +4,8 @@
 #include "BLEHIDDevice.h"
 #include "HIDTypes.h"
 #include "HIDKeyboardTypes.h"
+#include "device_name.h"
 #include "field.h"
-
-
-#define DEVICE_NAME "ESP32 Keyboard"
 
 bool isBleConnected = false;
 extern String dataToSend;

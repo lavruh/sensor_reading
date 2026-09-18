@@ -6,10 +6,12 @@
 #include <Wire.h>
 #include "menu.h"
 #include "MqttClient.h"
+#include "btStreamService.h"
 
 String dataToSend = "";
 
 MqttClient& mqtt = MqttClient::getInstance();
+btStreamService& btStream = btStreamService::getInstance();
 M5GFX display;
 
 
@@ -109,4 +111,5 @@ void loop()
   menu.loopTask();   
   // mqtt.loop();     
   mqtt.send(dataToSend.c_str());
+  btStream.send(dataToSend.c_str());
 }

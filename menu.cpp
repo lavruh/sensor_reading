@@ -11,12 +11,10 @@ extern void showIMU();
 
 Menu::Menu() : currentIndex(0) {
   // Initialize strategies
-  strategies[0] = new IMUMenuStrategy();
-  strategies[1] = new IrTemperatureMenu();
-  strategies[2] = new IntTempMenuStrategy();
-  strategies[3] = new DistanceSensorMenuStrategy();
-  // strategies[4] = new SetTimeMenuStrategy();
-  strategies[4] = new MqttMenuStrategy();
+  strategies[0] = new IrTemperatureMenu();
+  strategies[1] = new IMUMenuStrategy();
+  strategies[2] = new DistanceSensorMenuStrategy();
+  strategies[3] = new btStreamMenuStrategy();
   
   // Set the current strategy to the first one
   currentStrategy = strategies[0];
