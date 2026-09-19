@@ -75,7 +75,7 @@ void setup()
 
     int w = M5.Display.width()/2;
 
-    Wire.begin(0, 26);
+    Wire.begin(0, 26, 100000);
 
     int lh = 1;
 

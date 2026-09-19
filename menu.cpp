@@ -14,8 +14,9 @@ Menu::Menu() : currentIndex(0) {
   strategies[0] = new IrTemperatureMenu();
   strategies[1] = new IMUMenuStrategy();
   strategies[2] = new DistanceSensorMenuStrategy();
-  strategies[3] = new btStreamMenuStrategy();
-  
+  strategies[3] = new Ain4_20maMenuStrategy();
+  strategies[4] = new btStreamMenuStrategy();
+
   // Set the current strategy to the first one
   currentStrategy = strategies[0];
 }
@@ -32,6 +33,7 @@ void Menu::nextMenu() {
   currentIndex = (currentIndex + 1) % strategiesLength();
   currentStrategy = strategies[currentIndex];
   
+  Wire.end();
   // Clear display when switching menus
   M5.Display.clear();
 
@@ -44,6 +46,7 @@ void Menu::prevMenu() {
   currentIndex = (currentIndex - 1 + strategiesLength()) % strategiesLength();
   currentStrategy = strategies[currentIndex];
   
+  Wire.end();
   // Clear display when switching menus
   M5.Display.clear();
 

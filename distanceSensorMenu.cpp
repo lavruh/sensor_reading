@@ -28,6 +28,10 @@ void DistanceSensorMenuStrategy::initSensor() {
 
 void DistanceSensorMenuStrategy::loopTask() {
   titleField.show("Dist mm");
+
+  // Ensure Wire is pointing to HAT pins
+  Wire.begin(0, 26, 100000UL);
+
   if(!isInit) {
     initSensor();
   }

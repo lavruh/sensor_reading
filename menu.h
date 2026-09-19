@@ -76,13 +76,22 @@ public:
   void init();
 };
 
+class Ain4_20maMenuStrategy : public MenuStrategy {
+public:
+  bool isInit = false;
+  void loopTask() override;
+  void onButtonA() override;
+  void initSensor();
+  const char* getName() const override { return "4-20mA"; }
+};
+
 // Menu manager using Strategy pattern
 class Menu {
 private:
   MenuStrategy* currentStrategy;
   int currentIndex;
   // int strategyCount = 6;
-  MenuStrategy* strategies[4];  // Array of available strategies
+  MenuStrategy* strategies[5];  // Array of available strategies
   static const int MAX_SUBSCRIBERS = 8;
   // subscriber callbacks
   std::function<void()> _subscribers[MAX_SUBSCRIBERS];

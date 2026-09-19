@@ -28,6 +28,10 @@ void IrTemperatureMenu::initSensor() {
 
 void IrTemperatureMenu::loopTask() {
   titleField.show("IR_T *C");
+
+  // Ensure Wire is pointing to HAT pins
+  Wire.begin(0, 26, 100000UL);
+
   if(!isInit) {
     initSensor();
   }
