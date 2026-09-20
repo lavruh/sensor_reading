@@ -66,6 +66,13 @@ public:
   const char* getName() const override { return "BT Stream"; }
 };
 
+class BluefruitMenuStrategy : public MenuStrategy {
+public:
+  void loopTask() override;
+  void onButtonA() override;
+  const char* getName() const override { return "Bluefruit"; }
+};
+
 class MqttMenuStrategy : public MenuStrategy {
 public:
   bool isInit = false;
@@ -91,7 +98,7 @@ private:
   MenuStrategy* currentStrategy;
   int currentIndex;
   // int strategyCount = 6;
-  MenuStrategy* strategies[5];  // Array of available strategies
+  MenuStrategy* strategies[6];  // Array of available strategies
   static const int MAX_SUBSCRIBERS = 8;
   // subscriber callbacks
   std::function<void()> _subscribers[MAX_SUBSCRIBERS];

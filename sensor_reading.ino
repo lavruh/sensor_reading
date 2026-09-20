@@ -7,6 +7,7 @@
 #include "menu.h"
 #include "MqttClient.h"
 #include "btStreamService.h"
+#include "BluefruitService.h"
 
 String dataToSend = "";
 
@@ -112,4 +113,5 @@ void loop()
   // mqtt.loop();     
   mqtt.send(dataToSend.c_str());
   btStream.send(dataToSend.c_str());
+  BluefruitService::getInstance().send(dataToSend.c_str());
 }

@@ -1,6 +1,7 @@
 #include <M5Unified.h>
 #include "menu.h"
 #include "field.h"
+#include "BluefruitService.h"
 
 
 struct rect_t
@@ -41,8 +42,13 @@ void IMUMenuStrategy::loopTask() {
   body1.showValue(list, "L:");
   body2.showValue(trim, "T:");
 
-  snprintf(buffer, sizeof(buffer), "L:%.1f T:%.1f", list, trim);
+  snprintf(buffer, sizeof(buffer), "%.1f,%.1f", list, trim);
   dataToSend = buffer;
+
+  // Stream to Bluefruit Controller modules if connected
+  BluefruitService::getInstance().sendAccelerometer(data.accel.x, data.accel.y, data.accel.z);
+  BluefruitService::getInstance().sendGyro(data.gyro.x, data.gyro.y, data.gyro.z);
+
   M5.delay(100);
 
 }

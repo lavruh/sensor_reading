@@ -6,6 +6,9 @@
 #include "HIDKeyboardTypes.h"
 #include "device_name.h"
 #include "field.h"
+#include "BluefruitService.h"
+
+#define UART_SERVICE_UUID "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
 
 bool isBleConnected = false;
 extern String dataToSend;
@@ -79,6 +82,7 @@ class BleKeyboardCallbacks : public BLEServerCallbacks {
 
     void onConnect(BLEServer* server) {
         isBleConnected = true;
+        BluefruitService::getInstance().setConnected(true);
 
         // Allow notifications for characteristics
         BLE2902* cccDesc = (BLE2902*)input->getDescriptorByUUID(BLEUUID((uint16_t)0x2902));
@@ -87,10 +91,13 @@ class BleKeyboardCallbacks : public BLEServerCallbacks {
 
     void onDisconnect(BLEServer* server) {
         isBleConnected = false;
+        BluefruitService::getInstance().setConnected(false);
 
         // Disallow notifications for characteristics
         BLE2902* cccDesc = (BLE2902*)input->getDescriptorByUUID(BLEUUID((uint16_t)0x2902));
         cccDesc->setNotifications(false);
+
+        server->getAdvertising()->start();
     }
 };
 
@@ -120,6 +127,9 @@ void bluetoothTask(void*) {
     BLEServer* server = BLEDevice::createServer();
     server->setCallbacks(new BleKeyboardCallbacks());
 
+    // Initialize Bluefruit Service (UART)
+    BluefruitService::getInstance().init(server);
+
     // create an HID device
     hid = new BLEHIDDevice(server);
     input = hid->inputReport(1); // report ID
@@ -147,9 +157,22 @@ void bluetoothTask(void*) {
     // advertise the services
     BLEAdvertising* advertising = server->getAdvertising();
     advertising->setAppearance(HID_KEYBOARD);
-    advertising->addServiceUUID(hid->hidService()->getUUID());
-    advertising->addServiceUUID(hid->deviceInfo()->getUUID());
-    advertising->addServiceUUID(hid->batteryService()->getUUID());
+
+    // Main advertisement: HID Keyboard
+    BLEAdvertisementData advertisementData;
+    advertisementData.setFlags(0x06); // General Discoverable | BR/EDR Not Supported
+    advertisementData.setAppearance(HID_KEYBOARD);
+    advertisementData.setCompleteServices(BLEUUID(hid->hidService()->getUUID()));
+    advertisementData.setName(DEVICE_NAME);
+    advertising->setAdvertisementData(advertisementData);
+
+    // Scan Response: UART (Bluefruit) and Battery
+    // This allows the Bluefruit app to see the UART service via scanning
+    BLEAdvertisementData scanResponseData;
+    scanResponseData.setCompleteServices(BLEUUID(UART_SERVICE_UUID));
+    scanResponseData.setServiceData(BLEUUID(hid->batteryService()->getUUID()), "\x64");
+    advertising->setScanResponseData(scanResponseData);
+
     advertising->start();
 
     bleField.show("  R");

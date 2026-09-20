@@ -16,6 +16,7 @@ Menu::Menu() : currentIndex(0) {
   strategies[2] = new DistanceSensorMenuStrategy();
   strategies[3] = new Ain4_20maMenuStrategy();
   strategies[4] = new btStreamMenuStrategy();
+  strategies[5] = new BluefruitMenuStrategy();
 
   // Set the current strategy to the first one
   currentStrategy = strategies[0];
