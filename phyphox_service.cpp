@@ -1,13 +1,11 @@
 #include <M5Unified.h>
-#include <SparkFun_VL53L1X.h>
 #include <BLEDevice.h>
 #include <phyphoxBle.h>
 
-#include "Adafruit_MLX90614.h"
-#include "MODULE_4_20MA.h"
 #include "ble.h"
 #include "phyphox_service.h"
 #include "device_name.h"
+#include "sensors_service.h"
 
 namespace {
 constexpr int PHY_CHANNEL_COUNT = 4;
@@ -18,32 +16,14 @@ constexpr uint8_t ACCEL_X_CHANNEL = 4;
 constexpr const char* CHANNEL_NAMES[PHY_CHANNEL_COUNT] = {
     "IR", "Distance", "Current", "AccelX"};
 
-Adafruit_MLX90614 irSensor;
-SFEVL53L1X distanceSensor;
-MODULE_4_20MA currentSensor;
-
 PhyphoxBleExperiment::Graph graphs[PHY_CHANNEL_COUNT];
 PhyphoxBleExperiment::View motionView;
 PhyphoxBleExperiment::View temperatureView;
 PhyphoxBleExperiment::View electricalView;
 
-bool irSensorReady = false;
-bool distanceSensorReady = false;
-bool currentSensorReady = false;
 bool experimentConfigured = false;
 bool serviceRunning = false;
-float distanceMm = 0.0f;
 unsigned long lastDebugPrint = 0;
-
-void selectI2CBus(int sda, int scl) {
-  Wire.end();
-  Wire.begin(sda, scl, 100000UL);
-}
-
-bool isI2CDevicePresent(uint8_t address) {
-  Wire.beginTransmission(address);
-  return Wire.endTransmission() == 0;
-}
 
 void configureGraph(
     PhyphoxBleExperiment::Graph& graph,
@@ -85,46 +65,16 @@ void configureExperiment() {
   PhyphoxBLE::addExperiment(experiment);
 }
 
-void initializeSensors() {
-  selectI2CBus(0, 26);
-  irSensorReady = irSensor.begin(0x5A, &Wire);
-  distanceSensor.begin(Wire);
-  distanceSensorReady = distanceSensor.checkID();
-  Serial.printf("Phy VL53L1X: %s\n", distanceSensorReady ? "ready" : "not found");
-  if (distanceSensorReady) {
-    distanceSensor.setDistanceModeLong();
-    distanceSensor.setTimingBudgetInMs(50);
-    distanceSensor.setIntermeasurementPeriod(54);
-    distanceSensor.startRanging();
-  }
-
-  selectI2CBus(32, 33);
-  currentSensorReady = currentSensor.begin(&Wire, MODULE_4_20MA_ADDR, 32, 33);
-}
-
-void readAndSendSensors() {
+void sendSensorReadings() {
+  const SensorReadings& sensorReadings = SensorsService::getInstance().readings();
   float readings[PHY_CHANNEL_COUNT] = {};
-
-  selectI2CBus(0, 26);
   readings[IR_TEMP_CHANNEL - 1] =
-      irSensorReady ? irSensor.readObjectTempC() : 0.0f;
-
-  if (distanceSensorReady && distanceSensor.checkForDataReady()) {
-    const uint16_t rangeStatus = distanceSensor.getRangeStatus();
-    distanceMm = rangeStatus == 0 ? distanceSensor.getDistance() : 0.0f;
-    distanceSensor.clearInterrupt();
-  }
-  readings[DISTANCE_CHANNEL - 1] = distanceMm;
-
-  selectI2CBus(32, 33);
+      sensorReadings.irTemperatureReady ? sensorReadings.irTemperatureC : 0.0f;
+  readings[DISTANCE_CHANNEL - 1] =
+      sensorReadings.distanceReady ? sensorReadings.distanceMm : 0.0f;
   readings[CURRENT_CHANNEL - 1] =
-      currentSensorReady && isI2CDevicePresent(MODULE_4_20MA_ADDR)
-          ? currentSensor.getCurrentValue(0) / 100.0f
-          : 0.0f;
-
-  M5.Imu.update();
-  const auto imuData = M5.Imu.getImuData();
-  readings[ACCEL_X_CHANNEL - 1] = imuData.accel.x;
+      sensorReadings.currentReady ? sensorReadings.currentMa : 0.0f;
+  readings[ACCEL_X_CHANNEL - 1] = sensorReadings.imuData.accel.x;
 
   const unsigned long now = millis();
   if (now - lastDebugPrint >= 250) {
@@ -157,7 +107,6 @@ bool startPhyphoxService() {
     experimentConfigured = true;
   }
   PhyphoxBLE::start(DEVICE_NAME);
-  initializeSensors();
   serviceRunning = true;
   return true;
 }
@@ -189,6 +138,6 @@ BLEServer* getPhyphoxBleServer() {
 
 void loopPhyphoxService() {
   if (serviceRunning) {
-    readAndSendSensors();
+    sendSensorReadings();
   }
 }

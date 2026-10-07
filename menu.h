@@ -33,7 +33,6 @@ public:
 // Concrete strategy: Internal Temperature screen
 class IntTempMenuStrategy : public MenuStrategy {
 public:
-  bool isInit = false;
   void loopTask() override;
   void onButtonA() override;
   const char* getName() const override { return "IntTemp"; }
@@ -43,20 +42,16 @@ public:
 class DistanceSensorMenuStrategy : public MenuStrategy {
 public:
   String status = "";
-  bool isInit = false;
   void loopTask() override;
   void onButtonA() override;
-  void initSensor();
   const char* getName() const override { return "Distance"; }
 };
 
 // Concrete strategy: IR Temperature screen
 class IrTemperatureMenu : public MenuStrategy {
 public:
-  bool isInit = false;
   void loopTask() override;
   void onButtonA() override;
-  void initSensor();
   const char* getName() const override { return "IRTemperature"; }
 };
 
@@ -72,10 +67,8 @@ public:
 
 class Ain4_20maMenuStrategy : public MenuStrategy {
 public:
-  bool isInit = false;
   void loopTask() override;
   void onButtonA() override;
-  void initSensor();
   const char* getName() const override { return "4-20mA"; }
 };
 

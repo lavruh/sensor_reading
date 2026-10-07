@@ -2,6 +2,7 @@
 #include "menu.h"
 #include "field.h"
 #include "BluefruitService.h"
+#include "sensors_service.h"
 
 
 struct rect_t
@@ -27,10 +28,8 @@ void IMUMenuStrategy::loopTask() {
   titleField.show("Gyro");
 
  
-  auto imu_update = M5.Imu.update();
-  int dataOffset = M5.Display.width()/2;
   static rect_t rect_graph_area = {M5.Display.width()/2, M5.Display.height() /2 , M5.Display.width()/2, 200 };
-  auto data = M5.Imu.getImuData();
+  const auto& data = SensorsService::getInstance().readings().imuData;
   drawGraph(rect_graph_area, data);
 
   char buffer[20];
@@ -91,27 +90,15 @@ void drawBar(int32_t ox, int32_t oy, int32_t nx, int32_t px, int32_t h, uint32_t
 
 void drawGraph(const rect_t& r, const m5::imu_data_t& data)
 {
-  float aw = (128 * r.w) >> 1;
-  float gw = (128 * r.w) / 256.0f;
-  float mw = (128 * r.w) / 1024.0f;
   int ox = (r.x + r.w)>>1;
   int oy = r.y;
   int h = (r.h / 18);
-  int bar_count = 9;
 
   M5.Display.startWrite();
-  for (int index = 0; index < bar_count; ++index)
+  for (int index = 0; index < 9; ++index)
   {
-    float xval;
-    if (index < 9)
-    {
-      auto coe = coefficient_tbl[index / 3] * r.w;
-      xval = data.value[index] * coe;
-    }
-    else
-    {
-      xval = M5.Imu.getOffsetData(index - 9) * (1.0f / (1 << 19));
-    }
+    auto coe = coefficient_tbl[index / 3] * r.w;
+    float xval = data.value[index] * coe;
 
     // for Linear scale graph.
     float tmp = xval;

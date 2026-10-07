@@ -3,10 +3,7 @@
 #include "field.h"
 #include "Graph.h"
 
-#include <Wire.h>
-#include <SparkFun_VL53L1X.h>
-
-SFEVL53L1X distanceSensor;
+#include "sensors_service.h"
 
 extern TitleField titleField;
 extern TitleField body1;
@@ -17,31 +14,17 @@ extern int displayWidth;
 
 Graph distanceGraph(2, 150, displayWidth-4, 0, 4000);
 
-void DistanceSensorMenuStrategy::initSensor() {
-  distanceSensor.begin();
-  distanceSensor.setDistanceModeLong();
-  distanceSensor.setTimingBudgetInMs(50);
-  distanceSensor.setIntermeasurementPeriod(54);
-  distanceSensor.startRanging();
-  isInit = true;
-}
-
 void DistanceSensorMenuStrategy::loopTask() {
   titleField.show("Dist mm");
-
-  // Ensure Wire is pointing to HAT pins
-  Wire.begin(0, 26, 100000UL);
-
-  if(!isInit) {
-    initSensor();
+  const SensorReadings& readings = SensorsService::getInstance().readings();
+  const uint16_t distance = readings.distanceMm;
+  const int rangeStatus = readings.distanceRangeStatus;
+  if (!readings.distanceReady) {
+    body1.show("Err");
+    body2.show("No sensor");
+    M5.delay(400);
+    return;
   }
-
-  distanceSensor.startRanging();
-  uint16_t distance = distanceSensor.getDistance();
-  distanceSensor.clearInterrupt();
-  distanceSensor.stopRanging();
-
-  int rangeStatus = distanceSensor.getRangeStatus();
   switch (rangeStatus)
   {
   case 0:
@@ -90,6 +73,4 @@ void DistanceSensorMenuStrategy::onButtonA() {
 // Ensure the I2C address is set correctly (default is typically 0x29).
 // Arduino: Use the Wire.h library and a VL53L0X library (like the Adafruit VL53L0X library). 
 // Initialize with Wire.begin(0, 26).
-
-
 

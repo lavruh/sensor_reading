@@ -3,8 +3,8 @@
 #include "field.h"
 #include "ble.h"
 #include "phyphox_service.h"
+#include "sensors_service.h"
 
-#include <Wire.h>
 #include "menu.h"
 #include "MqttClient.h"
 #include "btStreamService.h"
@@ -79,8 +79,6 @@ void setup()
 
     int w = M5.Display.width()/2;
 
-    Wire.begin(0, 26, 100000);
-
     int lh = 1;
 
     dateField = Field(displayWidth / 4 +5, 5, lh, w);
@@ -100,6 +98,7 @@ void setup()
     menu.subscribe(std::bind(&TitleField::redraw, &titleField));
 
     M5.Imu.begin();
+    SensorsService::getInstance().begin();
 }
 
 void loop()
@@ -109,7 +108,7 @@ void loop()
   updateClocks();
   checkBLE();
   buttons();   
-  
+  SensorsService::getInstance().update();
   menu.loopTask();   
   loopPhyphoxService();
   // mqtt.loop();     
