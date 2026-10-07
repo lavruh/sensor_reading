@@ -10,6 +10,7 @@ public:
   virtual ~MenuStrategy() = default;
   virtual void loopTask() = 0;
   virtual void onButtonA() = 0;
+  virtual void onButtonALongPress() {}
   virtual const char* getName() const = 0;
 };
 
@@ -59,20 +60,6 @@ public:
   const char* getName() const override { return "IRTemperature"; }
 };
 
-class btStreamMenuStrategy : public MenuStrategy {
-public:
-  void loopTask() override;
-  void onButtonA() override;
-  const char* getName() const override { return "BT Stream"; }
-};
-
-class BluefruitMenuStrategy : public MenuStrategy {
-public:
-  void loopTask() override;
-  void onButtonA() override;
-  const char* getName() const override { return "Bluefruit"; }
-};
-
 class MqttMenuStrategy : public MenuStrategy {
 public:
   bool isInit = false;
@@ -92,13 +79,31 @@ public:
   const char* getName() const override { return "4-20mA"; }
 };
 
+class BleServiceMenuStrategy : public MenuStrategy {
+public:
+  void loopTask() override;
+  void onButtonA() override;
+  void onButtonALongPress() override;
+  bool startCombinedMode();
+  const char* getName() const override { return "BLE Service"; }
+
+private:
+  enum class Mode : uint8_t {
+    keyboard,
+    phyphox,
+    combined
+  };
+
+  Mode selectedMode = Mode::keyboard;
+  bool serviceRunning = false;
+};
+
 // Menu manager using Strategy pattern
 class Menu {
 private:
   MenuStrategy* currentStrategy;
   int currentIndex;
-  // int strategyCount = 6;
-  MenuStrategy* strategies[6];  // Array of available strategies
+  MenuStrategy* strategies[5];  // Array of available strategies
   static const int MAX_SUBSCRIBERS = 8;
   // subscriber callbacks
   std::function<void()> _subscribers[MAX_SUBSCRIBERS];
@@ -125,6 +130,9 @@ public:
   
   // Handle button A press
   void handleButtonA() { if (currentStrategy) currentStrategy->onButtonA(); }
+  void handleButtonALongPress() {
+    if (currentStrategy) currentStrategy->onButtonALongPress();
+  }
 
   // Subscribe a callback; callbacks have signature void()
   bool subscribe(const std::function<void()>& callback);

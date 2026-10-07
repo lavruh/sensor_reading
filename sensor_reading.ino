@@ -2,6 +2,7 @@
 #include <M5GFX.h>
 #include "field.h"
 #include "ble.h"
+#include "phyphox_service.h"
 
 #include <Wire.h>
 #include "menu.h"
@@ -39,7 +40,9 @@ int batteryLevel = 100;
 
 void buttons()
 {
-  if(M5.BtnA.wasClicked()){
+  if (M5.BtnA.wasHold()) {
+    menu.handleButtonALongPress();
+  } else if(M5.BtnA.wasClicked()){
     menu.handleButtonA();
   }
 
@@ -97,8 +100,6 @@ void setup()
     menu.subscribe(std::bind(&TitleField::redraw, &titleField));
 
     M5.Imu.begin();
-    xTaskCreate(bluetoothTask, "bluetooth", 20000, NULL, 5, NULL);
-    
 }
 
 void loop()
@@ -110,6 +111,7 @@ void loop()
   buttons();   
   
   menu.loopTask();   
+  loopPhyphoxService();
   // mqtt.loop();     
   mqtt.send(dataToSend.c_str());
   btStream.send(dataToSend.c_str());

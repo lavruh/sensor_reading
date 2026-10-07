@@ -24,7 +24,7 @@ BluefruitService& BluefruitService::getInstance() {
   return instance;
 }
 
-void BluefruitService::init(BLEServer* pServer) {
+void BluefruitService::init(BLEServer* pServer, bool advertiseService) {
   BLEService *pService = pServer->createService(UART_SERVICE_UUID);
 
   _pTxCharacteristic = pService->createCharacteristic(
@@ -44,8 +44,9 @@ void BluefruitService::init(BLEServer* pServer) {
 
   pService->start();
 
-  // Make sure advertising also includes this service UUID
-  pServer->getAdvertising()->addServiceUUID(UART_SERVICE_UUID);
+  if (advertiseService) {
+    pServer->getAdvertising()->addServiceUUID(UART_SERVICE_UUID);
+  }
 }
 
 void BluefruitService::handleWrite(BLECharacteristic* pCharacteristic) {

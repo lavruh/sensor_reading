@@ -5,6 +5,7 @@
 #include "HIDTypes.h"
 #include "HIDKeyboardTypes.h"
 #include "device_name.h"
+#include "ble.h"
 #include "field.h"
 #include "BluefruitService.h"
 
@@ -71,35 +72,65 @@ static const uint8_t REPORT_MAP[] = {
 BLEHIDDevice* hid;
 BLECharacteristic* input;
 BLECharacteristic* output;
+BLEServer* keyboardServer = nullptr;
+static TaskHandle_t bluetoothTaskHandle = nullptr;
+
+namespace {
+struct BleConnection {
+    bool active;
+    esp_gatt_if_t gattsIf;
+    uint16_t connectionId;
+};
+
+constexpr size_t MAX_TRACKED_CONNECTIONS = 4;
+BleConnection trackedConnections[MAX_TRACKED_CONNECTIONS] = {};
+portMUX_TYPE connectionMux = portMUX_INITIALIZER_UNLOCKED;
+
+void trackGattConnection(
+    esp_gatts_cb_event_t event,
+    esp_gatt_if_t gattsIf,
+    esp_ble_gatts_cb_param_t* param) {
+    bool connected = false;
+    bool connectionChanged = false;
+    portENTER_CRITICAL(&connectionMux);
+    if (event == ESP_GATTS_CONNECT_EVT) {
+        for (BleConnection& connection : trackedConnections) {
+            if (!connection.active) {
+                connection = {true, gattsIf, param->connect.conn_id};
+                connectionChanged = true;
+                break;
+            }
+        }
+        connected = true;
+    } else if (event == ESP_GATTS_DISCONNECT_EVT) {
+        for (BleConnection& connection : trackedConnections) {
+            if (connection.active &&
+                connection.connectionId == param->disconnect.conn_id) {
+                connection.active = false;
+                connectionChanged = true;
+            }
+        }
+    }
+    portEXIT_CRITICAL(&connectionMux);
+
+    if (connectionChanged) {
+        isBleConnected = connected;
+        BluefruitService::getInstance().setConnected(connected);
+        if (input != nullptr) {
+            BLE2902* descriptor = static_cast<BLE2902*>(
+                input->getDescriptorByUUID(BLEUUID(static_cast<uint16_t>(0x2902))));
+            if (descriptor != nullptr) {
+                descriptor->setNotifications(connected);
+            }
+        }
+        if (!connected && BLEDevice::getInitialized()) {
+            BLEDevice::startAdvertising();
+        }
+    }
+}
+}
 
 const InputReport NO_KEY_PRESSED = { };
-
-
-/*
- * Callbacks related to BLE connection
- */
-class BleKeyboardCallbacks : public BLEServerCallbacks {
-
-    void onConnect(BLEServer* server) {
-        isBleConnected = true;
-        BluefruitService::getInstance().setConnected(true);
-
-        // Allow notifications for characteristics
-        BLE2902* cccDesc = (BLE2902*)input->getDescriptorByUUID(BLEUUID((uint16_t)0x2902));
-        cccDesc->setNotifications(true);
-    }
-
-    void onDisconnect(BLEServer* server) {
-        isBleConnected = false;
-        BluefruitService::getInstance().setConnected(false);
-
-        // Disallow notifications for characteristics
-        BLE2902* cccDesc = (BLE2902*)input->getDescriptorByUUID(BLEUUID((uint16_t)0x2902));
-        cccDesc->setNotifications(false);
-
-        server->getAdvertising()->start();
-    }
-};
 
 
 /*
@@ -120,18 +151,19 @@ class BleKeyboardCallbacks : public BLEServerCallbacks {
 };
 
 
-void bluetoothTask(void*) {
-
-    // initialize the device
-    BLEDevice::init(DEVICE_NAME);
-    BLEServer* server = BLEDevice::createServer();
-    server->setCallbacks(new BleKeyboardCallbacks());
-
+bool startBleKeyboardOnServer(BLEServer* server, bool combinedMode) {
+    if (server == nullptr) {
+        return false;
+    }
+    if (combinedMode) {
+        BLEDevice::stopAdvertising();
+    }
+    keyboardServer = server;
     // Initialize Bluefruit Service (UART)
-    BluefruitService::getInstance().init(server);
+    BluefruitService::getInstance().init(keyboardServer, !combinedMode);
 
     // create an HID device
-    hid = new BLEHIDDevice(server);
+    hid = new BLEHIDDevice(keyboardServer);
     input = hid->inputReport(1); // report ID
     output = hid->outputReport(1); // report ID
     output->setCallbacks(new OutputCallbacks());
@@ -152,32 +184,150 @@ void bluetoothTask(void*) {
     hid->startServices();
 
     // set battery level to 100%
-    hid->setBatteryLevel(40);
+    // hid->setBatteryLevel(40);
 
     // advertise the services
-    BLEAdvertising* advertising = server->getAdvertising();
+    BLEAdvertising* advertising = keyboardServer->getAdvertising();
     advertising->setAppearance(HID_KEYBOARD);
 
-    // Main advertisement: HID Keyboard
-    BLEAdvertisementData advertisementData;
-    advertisementData.setFlags(0x06); // General Discoverable | BR/EDR Not Supported
-    advertisementData.setAppearance(HID_KEYBOARD);
-    advertisementData.setCompleteServices(BLEUUID(hid->hidService()->getUUID()));
-    advertisementData.setName(DEVICE_NAME);
-    advertising->setAdvertisementData(advertisementData);
+    if (combinedMode) {
+        BLEAdvertisementData scanResponseData;
+        scanResponseData.setCompleteServices(BLEUUID(hid->hidService()->getUUID()));
+        scanResponseData.setCompleteServices(BLEUUID(UART_SERVICE_UUID));
+        scanResponseData.setShortName("Sensor");
+        if (!advertising->setScanResponseData(scanResponseData)) {
+            return false;
+        }
+    } else {
+        BLEAdvertisementData advertisementData;
+        advertisementData.setFlags(0x06);
+        advertisementData.setAppearance(HID_KEYBOARD);
+        advertisementData.setCompleteServices(BLEUUID(hid->hidService()->getUUID()));
+        advertisementData.setName(DEVICE_NAME);
+        if (!advertising->setAdvertisementData(advertisementData)) {
+            return false;
+        }
 
-    // Scan Response: UART (Bluefruit) and Battery
-    // This allows the Bluefruit app to see the UART service via scanning
-    BLEAdvertisementData scanResponseData;
-    scanResponseData.setCompleteServices(BLEUUID(UART_SERVICE_UUID));
-    scanResponseData.setServiceData(BLEUUID(hid->batteryService()->getUUID()), "\x64");
-    advertising->setScanResponseData(scanResponseData);
+        BLEAdvertisementData scanResponseData;
+        scanResponseData.setCompleteServices(BLEUUID(UART_SERVICE_UUID));
+        scanResponseData.setServiceData(BLEUUID(hid->batteryService()->getUUID()), "\x64");
+        if (!advertising->setScanResponseData(scanResponseData)) {
+            return false;
+        }
+    }
 
-    advertising->start();
+    return advertising->start();
+}
+
+void bluetoothTask(void*) {
+    BLEDevice::init(DEVICE_NAME);
+    trackBleConnections();
+    keyboardServer = BLEDevice::createServer();
+    if (!startBleKeyboardOnServer(keyboardServer)) {
+        Serial.println("Failed to initialize BLE keyboard services");
+        bluetoothTaskHandle = nullptr;
+        vTaskDelete(nullptr);
+        return;
+    }
 
     bleField.show("  R");
     delay(portMAX_DELAY);
 };
+
+bool startBluetoothTask() {
+    if (bluetoothTaskHandle != nullptr) {
+        return true;
+    }
+
+    return xTaskCreate(
+               bluetoothTask, "bluetooth", 20000, nullptr, 5,
+               &bluetoothTaskHandle) == pdPASS;
+}
+
+void stopBluetoothTask() {
+    if (bluetoothTaskHandle == nullptr) {
+        return;
+    }
+
+    vTaskDelete(bluetoothTaskHandle);
+    bluetoothTaskHandle = nullptr;
+}
+
+void trackBleConnections() {
+    portENTER_CRITICAL(&connectionMux);
+    memset(trackedConnections, 0, sizeof(trackedConnections));
+    portEXIT_CRITICAL(&connectionMux);
+    BLEDevice::setCustomGattsHandler(trackGattConnection);
+}
+
+void resetBleKeyboardState() {
+    keyboardServer = nullptr;
+    hid = nullptr;
+    input = nullptr;
+    output = nullptr;
+    isBleConnected = false;
+    BluefruitService::getInstance().setConnected(false);
+}
+
+bool disconnectBleClients(uint32_t timeoutMs) {
+    if (!BLEDevice::getInitialized()) {
+        return true;
+    }
+
+    const unsigned long startedAt = millis();
+    for (;;) {
+        BLEDevice::stopAdvertising();
+        delay(50);
+
+        BleConnection connections[MAX_TRACKED_CONNECTIONS];
+        portENTER_CRITICAL(&connectionMux);
+        memcpy(connections, trackedConnections, sizeof(connections));
+        portEXIT_CRITICAL(&connectionMux);
+
+        bool anyConnected = false;
+        for (const BleConnection& connection : connections) {
+            if (connection.active) {
+                anyConnected = true;
+                const esp_err_t result = esp_ble_gatts_close(
+                    connection.gattsIf, connection.connectionId);
+                if (result != ESP_OK) {
+                    Serial.printf("BLE disconnect request failed: %d\n", result);
+                }
+            }
+        }
+
+        if (!anyConnected) {
+            delay(100);
+            portENTER_CRITICAL(&connectionMux);
+            for (const BleConnection& connection : trackedConnections) {
+                anyConnected = anyConnected || connection.active;
+            }
+            portEXIT_CRITICAL(&connectionMux);
+            if (!anyConnected) {
+                BLEDevice::stopAdvertising();
+                return true;
+            }
+        }
+
+        if (millis() - startedAt >= timeoutMs) {
+            Serial.println("Timed out waiting for BLE clients to disconnect");
+            return false;
+        }
+        delay(10);
+    }
+}
+
+bool disableBleKeyboard() {
+    if (!disconnectBleClients()) {
+        return false;
+    }
+
+    if (BLEDevice::getInitialized()) {
+        BLEDevice::deinit(false);
+    }
+    resetBleKeyboardState();
+    return true;
+}
 
 
 void typeText(String t) {

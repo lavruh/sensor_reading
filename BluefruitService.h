@@ -29,7 +29,7 @@ private:
 public:
   static BluefruitService& getInstance();
 
-  void init(BLEServer* pServer);
+  void init(BLEServer* pServer, bool advertiseService = true);
   bool enable();
   void disable();
   bool send(const char* message);
