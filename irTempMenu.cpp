@@ -20,14 +20,12 @@ void IrTemperatureMenu::loopTask() {
   const SensorReadings& readings = SensorsService::getInstance().readings();
   if (!readings.irTemperatureReady) {
     body1.show("Err");
-    M5.delay(400);
     return;
   }
   const float temp = readings.irTemperatureC;
   body1.showValue(temp);
   dataToSend = String(temp, 2);
-  graph.showHistValue(temp);  
-  M5.delay(400);
+  graph.showHistValue(temp); 
 }
 
 void IrTemperatureMenu::onButtonA() {

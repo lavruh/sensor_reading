@@ -99,6 +99,7 @@ void setup()
 
     M5.Imu.begin();
     SensorsService::getInstance().begin();
+    menu.handleButtonALongPress();
 }
 
 void loop()
@@ -111,8 +112,4 @@ void loop()
   SensorsService::getInstance().update();
   menu.loopTask();   
   loopPhyphoxService();
-  // mqtt.loop();     
-  mqtt.send(dataToSend.c_str());
-  btStream.send(dataToSend.c_str());
-  BluefruitService::getInstance().send(dataToSend.c_str());
 }

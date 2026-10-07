@@ -9,7 +9,7 @@ extern TitleField body2;
 extern String dataToSend;
 extern void showIMU();
 
-Menu::Menu() : currentIndex(0) {
+Menu::Menu() : currentIndex(4) {
   // Initialize strategies
   strategies[0] = new IrTemperatureMenu();
   strategies[1] = new IMUMenuStrategy();
@@ -17,8 +17,8 @@ Menu::Menu() : currentIndex(0) {
   strategies[3] = new Ain4_20maMenuStrategy();
   strategies[4] = new BleServiceMenuStrategy();
 
-  // Set the current strategy to the first one
-  currentStrategy = strategies[0];
+  // Start on the BLE service menu.
+  currentStrategy = strategies[currentIndex];
 }
 
 Menu::~Menu() {

@@ -87,7 +87,7 @@ private:
     combined
   };
 
-  Mode selectedMode = Mode::keyboard;
+  Mode selectedMode = Mode::combined;
   bool serviceRunning = false;
 };
 

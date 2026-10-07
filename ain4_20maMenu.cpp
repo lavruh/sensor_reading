@@ -19,14 +19,12 @@ void Ain4_20maMenuStrategy::loopTask() {
   const SensorReadings& readings = SensorsService::getInstance().readings();
   if (!readings.currentReady) {
     body1.show("Err");
-    M5.delay(400);
     return;
   }
 
   body1.showValue(readings.currentMa);
   dataToSend = String(readings.currentMa, 2);
   ainGraph.showHistValue(readings.currentMa);
-  M5.delay(400);
 }
 
 void Ain4_20maMenuStrategy::onButtonA() {

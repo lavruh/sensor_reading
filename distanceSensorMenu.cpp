@@ -22,7 +22,6 @@ void DistanceSensorMenuStrategy::loopTask() {
   if (!readings.distanceReady) {
     body1.show("Err");
     body2.show("No sensor");
-    M5.delay(400);
     return;
   }
   switch (rangeStatus)
@@ -49,7 +48,6 @@ void DistanceSensorMenuStrategy::loopTask() {
   dataToSend = String(distance);
   body2.show(status); 
   distanceGraph.showHistValue(distance);
-  M5.delay(400);
 }
 
 void DistanceSensorMenuStrategy::onButtonA() {

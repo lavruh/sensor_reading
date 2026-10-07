@@ -10,36 +10,36 @@ extern TitleField body1;
 extern TitleField body2;
 
 void BleServiceMenuStrategy::loopTask() {
-  titleField.show("BLE Service");
+  titleField.show("BLE Serv");
   if (!serviceRunning) {
     switch (selectedMode) {
       case Mode::keyboard:
-        body1.show("Sel: Keyboard");
+        body1.show("Keyboard");
         break;
       case Mode::phyphox:
-        body1.show("Sel: Phyphox");
+        body1.show("Phyphox");
         break;
       case Mode::combined:
-        body1.show("Sel: Combined");
+        body1.show("Phy+Kbd");
         break;
     }
-    body2.show("A select; hold start");
+    body2.show("start ?");
     return;
   }
 
   switch (selectedMode) {
     case Mode::keyboard:
-      body1.show("R: Keyboard");
-      body2.show(isBleConnected ? "Kbd connected" : "Waiting");
+      body1.show("Keyboard");
+      body2.show(isBleConnected ? "Running" : "Waiting");
       break;
     case Mode::phyphox:
-      body1.show("R: Phyphox");
-      body2.show(isPhyphoxServiceConnected() ? "Phy C"
+      body1.show("Phyphox");
+      body2.show(isPhyphoxServiceConnected() ? "Running"
                                              : "Waiting");
       break;
     case Mode::combined:
-      body1.show("R: Combined");
-      body2.show(isPhyphoxServiceConnected() ? "Comb C"
+      body1.show("Phy+Kbd");
+      body2.show(isPhyphoxServiceConnected() ? "Running"
                                              : "Waiting");
       break;
   }
@@ -67,7 +67,7 @@ void BleServiceMenuStrategy::onButtonA() {
 
 void BleServiceMenuStrategy::onButtonALongPress() {
   if (serviceRunning) {
-    body2.show("Service already active");
+    body2.show("active");
     return;
   }
 
@@ -83,7 +83,7 @@ void BleServiceMenuStrategy::onButtonALongPress() {
       break;
   }
   if (!serviceRunning) {
-    body2.show("Service start failed");
+    body2.show("failed");
     return;
   }
   loopTask();
