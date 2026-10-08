@@ -55,11 +55,18 @@ void buttons()
   }
 
   if(M5.BtnPWR.isHolding()){
-    M5.Display.clearDisplay(TFT_YELLOW);
-    // titleField.show(buf);
-    titleField.show("Pwr off:");
-    body1.show(String(powerCount));
-    powerCount= powerCount-1;
+    M5.Display.clearDisplay();
+    // M5.Display.setTextColor(TFT_RED);
+    M5.Display.drawCenterString(
+        "Pwr off:", M5.Display.width() / 2, M5.Display.height() / 2 - 18,
+        &fonts::FreeMonoBold12pt7b);
+    M5.Display.drawCenterString(
+        String(powerCount).c_str(), M5.Display.width() / 2,
+        M5.Display.height() / 2 + 12, &fonts::FreeMonoBold12pt7b);
+    // M5.Display.setTextColor(TFT_WHITE);
+    if (powerCount > 0) {
+      --powerCount;
+    }
     M5.delay(1000);
   }
   if(M5.BtnPWR.wasReleased()){
