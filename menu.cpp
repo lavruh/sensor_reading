@@ -9,15 +9,16 @@ extern TitleField body2;
 extern String dataToSend;
 extern void showIMU();
 
-Menu::Menu() : currentIndex(4) {
+Menu::Menu() : currentIndex(5) {
   // Initialize strategies
   strategies[0] = new IrTemperatureMenu();
   strategies[1] = new IMUMenuStrategy();
   strategies[2] = new DistanceSensorMenuStrategy();
   strategies[3] = new Ain4_20maMenuStrategy();
-  strategies[4] = new BleServiceMenuStrategy();
+  strategies[4] = new SetTimeMenuStrategy();
+  strategies[5] = new BleServiceMenuStrategy();
 
-  // Start on the BLE service menu.
+  // Keep BLE as the initial screen while reserving index 4 for time setting.
   currentStrategy = strategies[currentIndex];
 }
 

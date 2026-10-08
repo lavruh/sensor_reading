@@ -11,7 +11,41 @@ public:
   virtual void loopTask() = 0;
   virtual void onButtonA() = 0;
   virtual void onButtonALongPress() {}
+  virtual bool onButtonB() { return false; }
+  virtual bool onButtonPower() { return false; }
+  virtual bool blocksPowerOffScreen() const { return false; }
   virtual const char* getName() const = 0;
+};
+
+class SetTimeMenuStrategy : public MenuStrategy {
+public:
+  void loopTask() override;
+  void onButtonA() override;
+  void onButtonALongPress() override;
+  bool onButtonB() override;
+  bool onButtonPower() override;
+  bool blocksPowerOffScreen() const override { return editing; }
+  const char* getName() const override { return "Set Time"; }
+
+private:
+  enum class Step : uint8_t { year, month, day, hours, minutes, seconds };
+
+  bool editing = false;
+  bool updated = false;
+  bool cancelled = false;
+  const char* rtcError = nullptr;
+  Step step = Step::year;
+  uint16_t year = 0;
+  uint8_t month = 1;
+  uint8_t day = 1;
+  uint8_t hours = 0;
+  uint8_t minutes = 0;
+  uint8_t seconds = 0;
+
+  void adjustValue(int8_t direction);
+  void beginEditing();
+  void confirmStep();
+  void showCurrentStep();
 };
 
 // Concrete strategy: IMU display screen
@@ -21,14 +55,6 @@ public:
   void onButtonA() override;
   const char* getName() const override { return "IMU"; }
 };
-
-// Concrete strategy: Set Time menu screen
-// class SetTimeMenuStrategy : public MenuStrategy {
-// public:
-//   void loopTask() override;
-//   void onButtonA() override;
-//   const char* getName() const override { return "SetTime"; }
-// };
 
 // Concrete strategy: Internal Temperature screen
 class IntTempMenuStrategy : public MenuStrategy {
@@ -96,7 +122,7 @@ class Menu {
 private:
   MenuStrategy* currentStrategy;
   int currentIndex;
-  MenuStrategy* strategies[5];  // Array of available strategies
+  MenuStrategy* strategies[6];  // Array of available strategies
   static const int MAX_SUBSCRIBERS = 8;
   // subscriber callbacks
   std::function<void()> _subscribers[MAX_SUBSCRIBERS];
@@ -125,6 +151,15 @@ public:
   void handleButtonA() { if (currentStrategy) currentStrategy->onButtonA(); }
   void handleButtonALongPress() {
     if (currentStrategy) currentStrategy->onButtonALongPress();
+  }
+  void handleButtonB() {
+    if (!currentStrategy || !currentStrategy->onButtonB()) nextMenu();
+  }
+  void handleButtonPower() {
+    if (!currentStrategy || !currentStrategy->onButtonPower()) prevMenu();
+  }
+  bool blocksPowerOffScreen() const {
+    return currentStrategy && currentStrategy->blocksPowerOffScreen();
   }
 
   // Subscribe a callback; callbacks have signature void()

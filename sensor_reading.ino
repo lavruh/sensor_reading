@@ -47,14 +47,14 @@ void buttons()
   }
 
   if(M5.BtnB.wasClicked()){
-    menu.nextMenu();
+    menu.handleButtonB();
   }
 
   if(M5.BtnPWR.wasClicked()){
-    menu.prevMenu();
+    menu.handleButtonPower();
   }
 
-  if(M5.BtnPWR.isHolding()){
+  if(M5.BtnPWR.isHolding() && !menu.blocksPowerOffScreen()){
     M5.Display.clearDisplay();
     // M5.Display.setTextColor(TFT_RED);
     M5.Display.drawCenterString(
@@ -69,7 +69,7 @@ void buttons()
     }
     M5.delay(1000);
   }
-  if(M5.BtnPWR.wasReleased()){
+  if(M5.BtnPWR.wasReleased() && !menu.blocksPowerOffScreen()){
     powerCount = 3;
     M5.Display.clearDisplay(TFT_BLACK);
     menu.notifyListeners();

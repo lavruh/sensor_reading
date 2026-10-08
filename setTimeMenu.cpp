@@ -1,82 +1,248 @@
-// #include <M5Unified.h>
-// #include "menu.h"
-// #include "field.h"
+#include <M5Unified.h>
 
+#include "field.h"
+#include "menu.h"
 
-//  #define WIFI_SSID     "Ap9"
-//  #define WIFI_PASSWORD "mimicipi1"
-//  #define NTP_TIMEZONE  "EET-2"
-//  #define NTP_SERVER1   "0.pool.ntp.org"
-//  #define NTP_SERVER2   "1.pool.ntp.org"
-//  #define NTP_SERVER3   "2.pool.ntp.org"
+extern TitleField titleField;
+extern TitleField body1;
+extern TitleField body2;
 
-// #include <WiFi.h>
+namespace {
+bool isLeapYear(uint16_t year) {
+  return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+}
 
+uint8_t daysInMonth(uint16_t year, uint8_t month) {
+  constexpr uint8_t monthLengths[] = {31, 28, 31, 30, 31, 30,
+                                      31, 31, 30, 31, 30, 31};
+  if (month == 2 && isLeapYear(year)) {
+    return 29;
+  }
+  return monthLengths[month - 1];
+}
+}
 
-// // Different versions of the framework have different SNTP header file names and availability.
-//  #if __has_include (<esp_sntp.h>)
-//   #include <esp_sntp.h>
-//   #define SNTP_ENABLED 1
-//  #elif __has_include (<sntp.h>)
-//   #include <sntp.h>
-//   #define SNTP_ENABLED 1
-//  #endif
+void SetTimeMenuStrategy::loopTask() {
+  if (editing) {
+    showCurrentStep();
+    return;
+  }
 
+  titleField.show("Set Time");
+  if (rtcError != nullptr) {
+    body1.show(rtcError);
+    body2.show("retry");
+  } else if (cancelled) {
+    body1.show("Cancelled");
+    body2.show("A to restart");
+  } else if (!updated) {
+    body1.show("Press A");
+    body2.show("to set");
+  } else {
+    body1.show("Updated");
+    body2.show("A to edit");
+  }
+}
 
-// #ifndef SNTP_ENABLED
-// #define SNTP_ENABLED 0
-// #endif
+void SetTimeMenuStrategy::onButtonA() {
+  if (!editing) {
+    beginEditing();
+    return;
+  }
 
+  confirmStep();
+}
 
-// // Forward declarations from sensor_reading.ino
-// extern TitleField titleField;
-// extern Field body1;
-// extern Field body2;
+void SetTimeMenuStrategy::onButtonALongPress() {
+  if (!editing) {
+    return;
+  }
+  editing = false;
+  updated = false;
+  cancelled = true;
+  showCurrentStep();
+}
 
-// // SetTimeMenuStrategy implementation
-// void SetTimeMenuStrategy::loopTask() {
-//   titleField.show("Set Time");
-// }
+void SetTimeMenuStrategy::beginEditing() {
+  rtcError = nullptr;
+  updated = false;
+  cancelled = false;
+  if (!M5.Rtc.isEnabled()) {
+    rtcError = "RTC unavailable";
+    return;
+  }
 
-// void SetTimeMenuStrategy::onButtonA() {
-//   // Trigger time setting on button A
-  
-// /// setup RTC ( NTP auto setting )
-//   configTzTime(NTP_TIMEZONE, NTP_SERVER1, NTP_SERVER2, NTP_SERVER3);
-//   body1.show("WiFi:");
+  m5::rtc_datetime_t datetime{};
+  if (!M5.Rtc.getDateTime(&datetime)) {
+    rtcError = "RTC read failed";
+    return;
+  }
 
-//   WiFi.begin( WIFI_SSID, WIFI_PASSWORD );
+  if (datetime.date.year < 1900 || datetime.date.year > 2099 ||
+      datetime.date.month < 1 || datetime.date.month > 12 ||
+      datetime.date.date < 1 ||
+      datetime.date.date > daysInMonth(datetime.date.year,
+                                       datetime.date.month) ||
+      datetime.time.hours > 23 || datetime.time.minutes > 59 ||
+      datetime.time.seconds > 59) {
+    rtcError = "Invalid RTC time";
+    return;
+  }
 
-//   for (int i = 20; i && WiFi.status() != WL_CONNECTED; --i)
-//   {
-//     body2.show(".");
-//     M5.delay(500);
-//   }
-//   if (WiFi.status() == WL_CONNECTED) {
-//     body1.show("WiFi Connected.");
-//     body2.show("NTP:");
-// #if SNTP_ENABLED
-//     while (sntp_get_sync_status() != SNTP_SYNC_STATUS_COMPLETED)
-//     {
-//       body2.show(".");
-//       M5.delay(1000);
-//     }
-// #else
-//     M5.delay(1600);
-//     struct tm timeInfo;
-//     while (!getLocalTime(&timeInfo, 1000))
-//     {
-//       body2.show('.', 2);
-//     };
-// #endif
-//     body2.show("\r\nNTP Connected.");
+  year = datetime.date.year;
+  month = datetime.date.month;
+  day = datetime.date.date;
+  hours = datetime.time.hours;
+  minutes = datetime.time.minutes;
+  seconds = datetime.time.seconds;
+  step = Step::year;
+  editing = true;
+  showCurrentStep();
+}
 
-//     time_t t = time(nullptr)+1; // Advance one second.
-//     while (t > time(nullptr));  /// Synchronization in seconds
-//     M5.Rtc.setDateTime( localtime( &t ) );
-//   }
-//   else
-//   {
-//     body1.show("\r\nWiFi none...");
-//   }
-// }
+void SetTimeMenuStrategy::confirmStep() {
+  switch (step) {
+    case Step::year:
+      step = Step::month;
+      break;
+    case Step::month:
+      step = Step::day;
+      break;
+    case Step::day:
+      step = Step::hours;
+      break;
+    case Step::hours:
+      step = Step::minutes;
+      break;
+    case Step::minutes:
+      step = Step::seconds;
+      break;
+    case Step::seconds: {
+      m5::rtc_datetime_t datetime{};
+      datetime.date.year = year;
+      datetime.date.month = month;
+      datetime.date.date = day;
+      datetime.time.hours = hours;
+      datetime.time.minutes = minutes;
+      datetime.time.seconds = seconds;
+      M5.Rtc.setDateTime(&datetime);
+      M5.Rtc.setSystemTimeFromRtc();
+      editing = false;
+      updated = true;
+      cancelled = false;
+      break;
+    }
+  }
+  showCurrentStep();
+}
+
+bool SetTimeMenuStrategy::onButtonB() {
+  if (!editing) {
+    return false;
+  }
+  adjustValue(1);
+  showCurrentStep();
+  return true;
+}
+
+bool SetTimeMenuStrategy::onButtonPower() {
+  if (!editing) {
+    return false;
+  }
+  adjustValue(-1);
+  showCurrentStep();
+  return true;
+}
+
+void SetTimeMenuStrategy::adjustValue(int8_t direction) {
+  switch (step) {
+    case Step::year:
+      if (direction > 0) {
+        year = year >= 2099 ? 1900 : year + 1;
+      } else {
+        year = year <= 1900 ? 2099 : year - 1;
+      }
+      if (day > daysInMonth(year, month)) {
+        day = daysInMonth(year, month);
+      }
+      break;
+    case Step::month:
+      if (direction > 0) {
+        month = month >= 12 ? 1 : month + 1;
+      } else {
+        month = month <= 1 ? 12 : month - 1;
+      }
+      if (day > daysInMonth(year, month)) {
+        day = daysInMonth(year, month);
+      }
+      break;
+    case Step::day: {
+      const uint8_t lastDay = daysInMonth(year, month);
+      if (direction > 0) {
+        day = day >= lastDay ? 1 : day + 1;
+      } else {
+        day = day <= 1 ? lastDay : day - 1;
+      }
+      break;
+    }
+    case Step::hours:
+      hours = direction > 0 ? (hours + 1) % 24 : (hours + 23) % 24;
+      break;
+    case Step::minutes:
+      minutes = direction > 0 ? (minutes + 1) % 60 : (minutes + 59) % 60;
+      break;
+    case Step::seconds:
+      seconds = direction > 0 ? (seconds + 1) % 60 : (seconds + 59) % 60;
+      break;
+  }
+}
+
+void SetTimeMenuStrategy::showCurrentStep() {
+  if (!editing) {
+    titleField.show("Set Time");
+    if (rtcError != nullptr) {
+      body1.show(rtcError);
+      body2.show("retry");
+    } else if (cancelled) {
+      body1.show("Cancelled");
+      body2.show("A to restart");
+    } else {
+      body1.show(updated ? "Updated" : "Press A");
+      body2.show(updated ? "A to edit" : "to set");
+    }
+    return;
+  }
+
+  const char* label = "";
+  uint16_t value = 0;
+  switch (step) {
+    case Step::year:
+      label = "Y";
+      value = year;
+      break;
+    case Step::month:
+      label = "M";
+      value = month;
+      break;
+    case Step::day:
+      label = "D";
+      value = day;
+      break;
+    case Step::hours:
+      label = "Hr";
+      value = hours;
+      break;
+    case Step::minutes:
+      label = "Min";
+      value = minutes;
+      break;
+    case Step::seconds:
+      label = "Sec";
+      value = seconds;
+      break;
+  }
+
+  titleField.show("Set Time");
+  body1.show(String(label) + ": " + String(value));
+  body2.show("B+/P- A=OK");
+}
