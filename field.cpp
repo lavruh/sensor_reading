@@ -43,6 +43,81 @@ void TitleField::redraw()
   update(prevValue);
 }
 
+void LogField::show(String str)
+{
+  if (str != prevValue)
+  {
+    update(str);
+    prevValue = str;
+  }
+}
+
+void LogField::update(String str)
+{
+  if (w > 0 && h > 0)
+  {
+    M5.Display.fillRect(x, y, w, h, TFT_BLACK);
+  }
+
+  String line;
+  int lineIndex = 0;
+  const auto drawLine = [&]() {
+    M5.Display.drawString(line, x, y + lineIndex * lineHeight, font);
+    ++lineIndex;
+    line = "";
+  };
+
+  for (size_t i = 0; i < str.length(); ++i)
+  {
+    const char character = str[i];
+    if (character == '\n')
+    {
+      drawLine();
+    }
+    else if (character == ' ')
+    {
+      if (line.length() == 0)
+      {
+        continue;
+      }
+
+      size_t nextWordLength = 0;
+      for (size_t next = i + 1;
+           next < str.length() && str[next] != ' ' && str[next] != '\n';
+           ++next)
+      {
+        ++nextWordLength;
+      }
+      if (line.length() + 1 + nextWordLength > maxSymbols)
+      {
+        drawLine();
+      }
+      else
+      {
+        line += character;
+      }
+    }
+    else
+    {
+      if (line.length() >= maxSymbols)
+      {
+        drawLine();
+      }
+      line += character;
+    }
+  }
+
+  if (line.length() > 0)
+  {
+    drawLine();
+  }
+}
+
+void LogField::redraw()
+{
+  update(prevValue);
+}
+
 
   void TitleField::showValue(float num, String prefix = "", String suffix = "")
   {

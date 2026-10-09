@@ -5,7 +5,7 @@
 
 extern TitleField titleField;
 extern TitleField body1;
-extern TitleField body2;
+extern LogField logField;
 
 namespace {
 bool isLeapYear(uint16_t year) {
@@ -30,18 +30,19 @@ void SetTimeMenuStrategy::loopTask() {
 
   titleField.show("Set Time");
   if (rtcError != nullptr) {
-    body1.show(rtcError);
-    body2.show("retry");
+    logField.show(String(rtcError) + "\nA: retry");
   } else if (cancelled) {
-    body1.show("Cancelled");
-    body2.show("A to restart");
+    logField.show("Cancelled\nA: restart");
   } else if (!updated) {
-    body1.show("Press A");
-    body2.show("to set");
+    logField.show("Press A to set");
   } else {
-    body1.show("Updated");
-    body2.show("A to edit");
+    logField.show("Updated\nA: edit");
   }
+}
+
+void SetTimeMenuStrategy::onMenuEnter() {
+  titleField.redraw();
+  logField.redraw();
 }
 
 void SetTimeMenuStrategy::onButtonA() {
@@ -201,14 +202,11 @@ void SetTimeMenuStrategy::showCurrentStep() {
   if (!editing) {
     titleField.show("Set Time");
     if (rtcError != nullptr) {
-      body1.show(rtcError);
-      body2.show("retry");
+      logField.show(String(rtcError) + "\nA: retry");
     } else if (cancelled) {
-      body1.show("Cancelled");
-      body2.show("A to restart");
+      logField.show("Cancelled\nA: restart");
     } else {
-      body1.show(updated ? "Updated" : "Press A");
-      body2.show(updated ? "A to edit" : "to set");
+      logField.show(updated ? "Updated\nA: edit" : "Press A to set");
     }
     return;
   }
@@ -244,5 +242,5 @@ void SetTimeMenuStrategy::showCurrentStep() {
 
   titleField.show("Set Time");
   body1.show(String(label) + ": " + String(value));
-  body2.show("B+/P- A=OK");
+  logField.show("B/P +/- A=next\nHold A=cancel");
 }

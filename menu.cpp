@@ -40,6 +40,7 @@ void Menu::nextMenu() {
 
   // Notify listeners about menu change
   notifyListeners();
+  currentStrategy->onMenuEnter();
 }
 
 void Menu::prevMenu() {
@@ -53,6 +54,7 @@ void Menu::prevMenu() {
 
   // Notify listeners about menu change
   notifyListeners();
+  currentStrategy->onMenuEnter();
 }
 
 // Note: Menu::loopTask() wrapper is declared in header and calls current strategy's loopTask().

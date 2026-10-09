@@ -29,6 +29,7 @@ Field bleField = Field();
 TitleField titleField = TitleField();
 TitleField body1 = TitleField();
 TitleField body2 = TitleField();
+LogField logField = LogField();
 
 Menu menu = Menu();
 
@@ -93,9 +94,11 @@ void setup()
     batField = Field(5, 5, lh, w);
     bleField = Field(5, 25, lh, w);
     
-    titleField = TitleField(0, 50, lh, displayWidth, &fonts::FreeMono12pt7b);
-    body1 = TitleField(0, 80, lh, displayWidth, &fonts::FreeSerif18pt7b);
-    body2 = TitleField(0, 110, lh, displayWidth, &fonts::FreeSerif18pt7b);
+    titleField = TitleField(0, 45, lh, displayWidth, &fonts::FreeMono12pt7b);
+    body1 = TitleField(0, 70, lh, displayWidth, &fonts::FreeSerif18pt7b);
+    body2 = TitleField(0, 100, lh, displayWidth, &fonts::FreeSerif18pt7b);
+    logField = LogField(0, 140, 29, displayWidth, 16, 13,
+                        &fonts::FreeSans9pt7b);
 
 
     menu.subscribe(std::bind(&Field::redraw, &dateField));

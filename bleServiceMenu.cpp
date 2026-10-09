@@ -7,7 +7,7 @@
 
 extern TitleField titleField;
 extern TitleField body1;
-extern TitleField body2;
+extern LogField logField;
 
 void BleServiceMenuStrategy::loopTask() {
   titleField.show("BLE Serv");
@@ -23,38 +23,44 @@ void BleServiceMenuStrategy::loopTask() {
         body1.show("Phy+Kbd");
         break;
     }
-    body2.show("start ?");
+    logField.show("start ?");
     return;
   }
 
   switch (selectedMode) {
     case Mode::keyboard:
       body1.show("Keyboard");
-      body2.show(isBleConnected ? "Running" : "Waiting");
+      logField.show(isBleConnected ? "Running" : "Waiting");
       break;
     case Mode::phyphox:
       body1.show("Phyphox");
-      body2.show(isPhyphoxServiceConnected() ? "Running"
-                                             : "Waiting");
+      logField.show(isPhyphoxServiceConnected() ? "Running"
+                                               : "Waiting");
       break;
     case Mode::combined:
       body1.show("Phy+Kbd");
-      body2.show(isPhyphoxServiceConnected() ? "Running"
-                                             : "Waiting");
+      logField.show(isPhyphoxServiceConnected() ? "Running"
+                                               : "Waiting");
       break;
   }
+}
+
+void BleServiceMenuStrategy::onMenuEnter() {
+  titleField.redraw();
+  body1.redraw();
+  logField.redraw();
 }
 
 void BleServiceMenuStrategy::onButtonA() {
   if (serviceRunning) {
     if (selectedMode == Mode::keyboard) {
       if (!disableBleKeyboard()) {
-        body2.show("BLE stop failed");
+        logField.show("BLE stop failed");
         return;
       }
       stopBluetoothTask();
     } else if (!stopPhyphoxService()) {
-      body2.show("BLE stop failed");
+      logField.show("BLE stop failed");
       return;
     }
     serviceRunning = false;
@@ -67,7 +73,7 @@ void BleServiceMenuStrategy::onButtonA() {
 
 void BleServiceMenuStrategy::onButtonALongPress() {
   if (serviceRunning) {
-    body2.show("active");
+    logField.show("active");
     return;
   }
 
@@ -83,7 +89,7 @@ void BleServiceMenuStrategy::onButtonALongPress() {
       break;
   }
   if (!serviceRunning) {
-    body2.show("failed");
+    logField.show("failed");
     return;
   }
   loopTask();

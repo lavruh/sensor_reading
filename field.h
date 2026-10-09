@@ -34,4 +34,24 @@ public:
   void showValue(int num);
   void update(String str);
 };
+
+class LogField : public Field {
+public:
+  uint8_t maxSymbols;
+  uint8_t lineHeight;
+  const lgfx::IFont* font;
+
+  LogField(int x = 0, int y = 0, int h = 0, int w = 0,
+           uint8_t maxSymbols = 12, uint8_t lineHeight = 16,
+           const lgfx::IFont* font = &fonts::FreeSans9pt7b)
+      : Field(x, y, h, w),
+        maxSymbols(maxSymbols == 0 ? 12 : maxSymbols),
+        lineHeight(lineHeight == 0 ? 16 : lineHeight),
+        font(font) {}
+
+  void show(String str);
+  void update(String str);
+  void redraw();
+};
+
 #endif // FIELD_H

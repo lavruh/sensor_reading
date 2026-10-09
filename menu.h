@@ -14,6 +14,7 @@ public:
   virtual bool onButtonB() { return false; }
   virtual bool onButtonPower() { return false; }
   virtual bool blocksPowerOffScreen() const { return false; }
+  virtual void onMenuEnter() {}
   virtual const char* getName() const = 0;
 };
 
@@ -25,6 +26,7 @@ public:
   bool onButtonB() override;
   bool onButtonPower() override;
   bool blocksPowerOffScreen() const override { return editing; }
+  void onMenuEnter() override;
   const char* getName() const override { return "Set Time"; }
 
 private:
@@ -101,6 +103,7 @@ public:
 class BleServiceMenuStrategy : public MenuStrategy {
 public:
   void loopTask() override;
+  void onMenuEnter() override;
   void onButtonA() override;
   void onButtonALongPress() override;
   bool startCombinedMode();
